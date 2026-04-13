@@ -1,0 +1,238 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+
+
+model Account {
+    id                       String       @id @default(cuid())
+    userId                   String
+    type                     String
+    provider                 String
+    providerAccountId        String
+    refresh_token            String?      // @db.Text
+    access_token             String?      // @db.Text
+    expires_at               Int?
+    token_type               String?
+    scope                    String?
+    id_token                 String?      // @db.Text
+    session_state            String?
+    user                     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    refresh_token_expires_in Int?
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id                      String       @id @default(cuid())
+    sessionToken            String       @unique
+    userId                  String
+    expires                 DateTime
+    user                    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+    identifier              String
+    token                   String       @unique
+    expires                 DateTime
+
+    @@unique([identifier, token])
+}
+
+model User {
+    id                  String          @id @default(cuid())
+    firstname           String?
+    surname             String?
+    email               String?         @unique
+    emailVerified       DateTime?
+    image               String?
+
+    role                Role            @default(USER)
+
+    accounts            Account[]
+    sessions            Session[]
+    tournaments         Turnir[]        
+}
+enum Role {
+  ADMIN      
+  ORGANIZER  
+  USER       
+}
+
+model Participant {
+  id              String      @id @default(cuid())
+  firstname       String
+  surname         String
+  rating          Int                      
+
+  tournaments     TurnirParticipant[]     
+}
+
+model TurnirParticipant {
+  id                  String          @id @default(cuid())
+  points              Int             @default(0)             
+  wins                Int             @default(0)             
+  defeat              Int             @default(0)             
+  scoreFor            Int             @default(0)             
+  scoreAgainst        Int             @default(0)             
+
+  participantId       String?                              
+  participant         Participant?    @relation(fields: [participantId], references: [id], onDelete: SetNull)
+
+  tournamentId        String                               
+  tournament          Turnir          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  groupId             String?                             
+  group               Group?          @relation(fields: [groupId], references: [id])
+
+  groupMatchesAsA     GroupMatch[]    @relation("PlayerA")
+  groupMatchesAsB     GroupMatch[]    @relation("PlayerB")
+
+  bracketMatchesAsA   BracketMatch[]  @relation("BracketPlayerA")
+  bracketMatchesAsB   BracketMatch[]  @relation("BracketPlayerB")
+
+  @@unique([tournamentId, participantId])
+}
+
+
+
+model Turnir {
+  id                    String          @id @default(cuid())
+  nameTurnir            String                                    
+  description           String?                                   
+  stage                 TypeStage       @default(GROUP)           
+
+  participantsCount     Int                                       
+  groupsCount           Int                                       
+
+  tiebreakType          TiebreakType                              
+
+  createdAt             DateTime        @default(now())           
+  updatedAt             DateTime        @updatedAt                
+
+  createdById           String                                    
+  createdBy             User            @relation(fields: [createdById], references: [id])
+
+  participants          TurnirParticipant[]                       
+  groups                Group[]                                   
+  brackets              Bracket[]                                 
+}
+enum TypeStage {  
+  GROUP           
+  BRACKET         
+  FINISHED        
+}
+enum TiebreakType {  
+  POINTS             
+  HEAD_TO_HEAD       
+  SCORE_DIFF         
+}
+
+model Group {
+  id              String      @id @default(cuid())
+  name            String                        
+
+  tournamentId    String                        
+  tournament      Turnir      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  participants    TurnirParticipant[]           
+  matches         GroupMatch[]                  
+}
+
+model GroupMatch {
+  id              String               @id @default(cuid())
+  round           Int                    
+  playerAId       String                 
+  playerA         TurnirParticipant    @relation("PlayerA", fields: [playerAId], references: [id])
+  playerBId       String                 
+  playerB         TurnirParticipant    @relation("PlayerB", fields: [playerBId], references: [id])
+  status          MatchStatus          @default(SCHEDULED)     
+
+  result          GroupMatchResult?     @relation("GroupMatchResult")
+
+  groupId         String                 
+  group           Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+enum MatchStatus {  
+  SCHEDULED         
+  FINISHED          
+}
+
+model GroupMatchResult {
+  id              String              @id @default(cuid())
+  scoreA          Int                
+  scoreB          Int                
+  winnerId        String?             
+
+  groupMatchId    String?             @unique
+  groupMatch      GroupMatch?         @relation("GroupMatchResult", fields: [groupMatchId], references: [id])
+  
+  createdAt       DateTime            @default(now())
+}
+
+
+
+model Bracket {
+  id              String        @id @default(cuid())
+  type            BracketType                         
+  doubleElim      Boolean       @default(false)       
+  tournamentId    String                              
+  tournament      Turnir        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  matches         BracketMatch[]                      
+}
+enum BracketType {  
+  UPPER             
+  LOWER             
+  CONSOLATION       
+}
+
+model BracketMatch {
+  id              String                    @id @default(cuid())
+  round           Int                                   
+  status          MatchStatus               @default(SCHEDULED)    
+
+  playerAId       String                                           
+  playerA         TurnirParticipant         @relation("BracketPlayerA", fields: [playerAId], references: [id])
+  playerBId       String                                          
+  playerB         TurnirParticipant         @relation("BracketPlayerB", fields: [playerBId], references: [id])
+
+  
+  result          BracketMatchResult[]            
+
+  bracketId       String                                
+  bracket         Bracket                   @relation(fields: [bracketId], references: [id], onDelete: Cascade)
+}
+
+
+model BracketMatchResult {
+  id                String            @id @default(cuid())
+  scoreA            Int                
+  scoreB            Int                
+  winnerId          String?             
+
+  bracketMatchId    String             
+  bracketMatch      BracketMatch    @relation(fields: [bracketMatchId], references: [id])
+
+  createdAt         DateTime          @default(now())
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,4 @@
+{
+    "terminal.integrated.gpuAcceleration": "off",
+    "terminal.integrated.scrollback": 10000
+}
