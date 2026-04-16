@@ -7,8 +7,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-
-
 model Account {
     id                       String       @id @default(cuid())
     userId                   String
@@ -48,182 +46,73 @@ model User {
     id                  String          @id @default(cuid())
     firstname           String?
     surname             String?
+    patronymic          String?
     email               String?         @unique
     emailVerified       DateTime?
     image               String?
 
-    role                Role            @default(USER)
+    createdAt           DateTime        @default(now())
+    role                RoleSystem      @default(USER)
 
     accounts            Account[]
-    sessions            Session[]
-    tournaments         Turnir[]        
+    sessions            Session[]   
+
+    messages            Message[]
+    chats               ChatMember[]   
 }
-enum Role {
-  ADMIN      
-  ORGANIZER  
+enum RoleSystem {
+  ADMIN        
   USER       
 }
 
-model Participant {
-  id              String      @id @default(cuid())
-  firstname       String
-  surname         String
-  rating          Int                      
+//Пользователь чата
+model ChatMember {
+  id                String      @id @default(uuid())
+  userId            String
+  chatId            String
+  role              RoleChats   @default(USER)
 
-  tournaments     TurnirParticipant[]     
+  user              User        @relation(fields: [userId], references: [id])
+  chat              Chat        @relation(fields: [chatId], references: [id])
+
+  @@unique([userId, chatId])
 }
-
-model TurnirParticipant {
-  id                  String          @id @default(cuid())
-  points              Int             @default(0)             
-  wins                Int             @default(0)             
-  defeat              Int             @default(0)             
-  scoreFor            Int             @default(0)             
-  scoreAgainst        Int             @default(0)             
-
-  participantId       String?                              
-  participant         Participant?    @relation(fields: [participantId], references: [id], onDelete: SetNull)
-
-  tournamentId        String                               
-  tournament          Turnir          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-
-  groupId             String?                             
-  group               Group?          @relation(fields: [groupId], references: [id])
-
-  groupMatchesAsA     GroupMatch[]    @relation("PlayerA")
-  groupMatchesAsB     GroupMatch[]    @relation("PlayerB")
-
-  bracketMatchesAsA   BracketMatch[]  @relation("BracketPlayerA")
-  bracketMatchesAsB   BracketMatch[]  @relation("BracketPlayerB")
-
-  @@unique([tournamentId, participantId])
+enum RoleChats {
+  ADMIN        
+  USER       
 }
 
 
+//Чат
+model Chat {
+  id                String          @id @default(uuid())
+  name              String?
+  createdAt         DateTime        @default(now())
 
-model Turnir {
-  id                    String          @id @default(cuid())
-  nameTurnir            String                                    
-  description           String?                                   
-  stage                 TypeStage       @default(GROUP)           
-
-  participantsCount     Int                                       
-  groupsCount           Int                                       
-
-  tiebreakType          TiebreakType                              
-
-  createdAt             DateTime        @default(now())           
-  updatedAt             DateTime        @updatedAt                
-
-  createdById           String                                    
-  createdBy             User            @relation(fields: [createdById], references: [id])
-
-  participants          TurnirParticipant[]                       
-  groups                Group[]                                   
-  brackets              Bracket[]                                 
-}
-enum TypeStage {  
-  GROUP           
-  BRACKET         
-  FINISHED        
-}
-enum TiebreakType {  
-  POINTS             
-  HEAD_TO_HEAD       
-  SCORE_DIFF         
+  messages          Message[]
+  members           ChatMember[]
 }
 
-model Group {
-  id              String      @id @default(cuid())
-  name            String                        
-
-  tournamentId    String                        
-  tournament      Turnir      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-
-  participants    TurnirParticipant[]           
-  matches         GroupMatch[]                  
+enum ChatType {
+  DIRECT     // 1 на 1
+  GROUP      // группа
+  CHANNEL    // канал (односторонний)
 }
 
-model GroupMatch {
-  id              String               @id @default(cuid())
-  round           Int                    
-  playerAId       String                 
-  playerA         TurnirParticipant    @relation("PlayerA", fields: [playerAId], references: [id])
-  playerBId       String                 
-  playerB         TurnirParticipant    @relation("PlayerB", fields: [playerBId], references: [id])
-  status          MatchStatus          @default(SCHEDULED)     
+//Сообщения
+model Message {
+  id                 String          @id @default(uuid())
+  text               String          @db.Text
+  createdAt          DateTime        @default(now())
 
-  result          GroupMatchResult?     @relation("GroupMatchResult")
+  senderId           String
+  chatId             String
 
-  groupId         String                 
-  group           Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  readUsersMessenge  ChatMember[]             //список пользователей которые прочли сообщение
+
+  sender             User            @relation(fields: [senderId], references: [id])
+  chat               Chat            @relation(fields: [chatId], references: [id])
 }
-enum MatchStatus {  
-  SCHEDULED         
-  FINISHED          
-}
-
-model GroupMatchResult {
-  id              String              @id @default(cuid())
-  scoreA          Int                
-  scoreB          Int                
-  winnerId        String?             
-
-  groupMatchId    String?             @unique
-  groupMatch      GroupMatch?         @relation("GroupMatchResult", fields: [groupMatchId], references: [id])
-  
-  createdAt       DateTime            @default(now())
-}
-
-
-
-model Bracket {
-  id              String        @id @default(cuid())
-  type            BracketType                         
-  doubleElim      Boolean       @default(false)       
-  tournamentId    String                              
-  tournament      Turnir        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-
-  matches         BracketMatch[]                      
-}
-enum BracketType {  
-  UPPER             
-  LOWER             
-  CONSOLATION       
-}
-
-model BracketMatch {
-  id              String                    @id @default(cuid())
-  round           Int                                   
-  status          MatchStatus               @default(SCHEDULED)    
-
-  playerAId       String                                           
-  playerA         TurnirParticipant         @relation("BracketPlayerA", fields: [playerAId], references: [id])
-  playerBId       String                                          
-  playerB         TurnirParticipant         @relation("BracketPlayerB", fields: [playerBId], references: [id])
-
-  
-  result          BracketMatchResult[]            
-
-  bracketId       String                                
-  bracket         Bracket                   @relation(fields: [bracketId], references: [id], onDelete: Cascade)
-}
-
-
-model BracketMatchResult {
-  id                String            @id @default(cuid())
-  scoreA            Int                
-  scoreB            Int                
-  winnerId          String?             
-
-  bracketMatchId    String             
-  bracketMatch      BracketMatch    @relation(fields: [bracketMatchId], references: [id])
-
-  createdAt         DateTime          @default(now())
-}
-
-
-
 
 
 
