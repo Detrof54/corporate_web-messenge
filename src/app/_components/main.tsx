@@ -14,7 +14,7 @@ export async function MyApp({
           { session ? <Navbar session={session} /> : <SigninLink /> }
         </header>
         <main>
-          { session ? children : "Not signed in" }
+          { session ? children : "Не вошел в систему" }
         </main>
       </HydrateClient>
     );

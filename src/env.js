@@ -12,7 +12,7 @@ export const env = createEnv({
         ? z.string()
         : z.string().optional(),
     EMAIL_SERVER: z.string(),
-    EMAIK_FROM: z.string(),
+    EMAIL_FROM: z.string(),
     DATABASE_URL: z.string().url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
@@ -35,7 +35,7 @@ export const env = createEnv({
   runtimeEnv: {
     AUTH_SECRET: process.env.AUTH_SECRET,
     EMAIL_SERVER: process.env.EMAIL_SERVER,
-    EMAIK_FROM: process.env.EMAIK_FROM,
+    EMAIL_FROM: process.env.EMAIL_FROM,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
   },

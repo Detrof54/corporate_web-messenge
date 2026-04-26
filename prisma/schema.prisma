@@ -44,12 +44,12 @@ model VerificationToken {
 
 model User {
     id                  String          @id @default(cuid())
+    image               String?                                 //сылка на изображение
     firstname           String?
     surname             String?
     patronymic          String?
     email               String?         @unique
     emailVerified       DateTime?
-    image               String?
 
     createdAt           DateTime        @default(now())
     role                RoleSystem      @default(USER)
@@ -57,8 +57,11 @@ model User {
     accounts            Account[]
     sessions            Session[]   
 
+
+    chats               ChatMember[]  
     messages            Message[]
-    chats               ChatMember[]   
+    messageReads        MessageRead[]
+    folder              Folder[]
 }
 enum RoleSystem {
   ADMIN        
@@ -67,53 +70,110 @@ enum RoleSystem {
 
 //Пользователь чата
 model ChatMember {
-  id                String      @id @default(uuid())
+  id                String        @id @default(cuid())
   userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   chatId            String
-  role              RoleChats   @default(USER)
+  chat              Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
-  user              User        @relation(fields: [userId], references: [id])
-  chat              Chat        @relation(fields: [chatId], references: [id])
+  role              ChatRole      @default(USER)
+  joinedAt          DateTime      @default(now())
+  lastReadAt        DateTime?
 
   @@unique([userId, chatId])
 }
-enum RoleChats {
+enum ChatRole {
   ADMIN        
   USER       
 }
 
 
-//Чат
+//Чат (личный, групповой или канальный)
 model Chat {
-  id                String          @id @default(uuid())
-  name              String?
+  id                String          @id @default(cuid())
+  image             String?         //для группы\канала
+  name              String?         //для группы\канала
+  description       String?         //для группы\канала
+  chatType          ChatType
+
   createdAt         DateTime        @default(now())
 
   messages          Message[]
   members           ChatMember[]
-}
 
+  folderChat        FolderChat[]
+}
 enum ChatType {
   DIRECT     // 1 на 1
   GROUP      // группа
   CHANNEL    // канал (односторонний)
 }
 
-//Сообщения
-model Message {
-  id                 String          @id @default(uuid())
-  text               String          @db.Text
-  createdAt          DateTime        @default(now())
 
-  senderId           String
-  chatId             String
+//Прочитали сообщение
+model MessageRead {
+  id              String          @id @default(cuid())
 
-  readUsersMessenge  ChatMember[]             //список пользователей которые прочли сообщение
+  messageId       String
+  message         Message         @relation(fields: [messageId], references: [id], onDelete: Cascade)  
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  sender             User            @relation(fields: [senderId], references: [id])
-  chat               Chat            @relation(fields: [chatId], references: [id])
+  readAt          DateTime        @default(now())
+  @@unique([messageId, userId])
 }
 
+//Сообщения
+model Message {
+  id                 String                 @id @default(cuid())
+  text               String                 @db.Text
+  createdAt          DateTime               @default(now())
+
+  senderId           String
+  sender             User                   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  chatId             String
+  chat               Chat                   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  reads              MessageRead[]
+
+  // image              String?
+  // files              String?
+  // typeMessenge       TypeMessenge      @default(TEXT)
+
+  @@index([chatId, createdAt])
+}
+
+enum TypeMessenge {
+  TEXT
+  IMAGE
+  FILE
+}
+
+
+//чат в папке (промежуточная таблица)
+model FolderChat {
+  id                  String          @id @default(cuid())
+  chatId              String
+  chat                Chat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  folderId            String
+  folder              Folder            @relation(fields: [folderId], references: [id], onDelete: Cascade)    
+
+  @@unique([chatId, folderId])           
+}
+
+//Папка с чатами
+model Folder {
+  id                  String          @id @default(cuid())
+  image               String?         //сылка на изображение
+  name                String
+
+  userId              String
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  folderChat          FolderChat[]
+}
 
 
 
