@@ -167,9 +167,9 @@ model FolderChat {
 //Папка с чатами
 model Folder {
   id                  String          @id @default(cuid())
-  image               String?         //сылка на изображение
   name                String
 
+  // image               String?         //сылка на изображение
   userId              String
   user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 

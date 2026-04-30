@@ -7,8 +7,8 @@ export default async function Home() {
   const session = await auth();
 
   return (
-      <div className="min-h-screen w-full !bg-gray-900 p-4 text-white">
-        
+      <div className="min-h-screen w-full !bg-gray-800 p-4 text-white">
+        <h1>Главная страница</h1>
       </div>
     )
   }

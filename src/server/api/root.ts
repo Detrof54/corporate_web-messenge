@@ -1,6 +1,7 @@
 
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { userProfileRouter } from "./routers/profile";
+import { sidebarRouter } from "./routers/sidebar";
 
 
 
@@ -10,6 +11,7 @@ import { userProfileRouter } from "./routers/profile";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+    sidebar: sidebarRouter,
     profile: userProfileRouter,
     
 });
