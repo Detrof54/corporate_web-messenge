@@ -13,13 +13,13 @@ export async function MyApp({
   return (
     <HydrateClient>
       {session ? (
-        <div className="flex h-screen bg-gray-800 text-white">
+        <div className="flex h-screen bg-gray-900 text-white">
           
           {/* Sidebar */}
           <Sidebar userId={session.user.id} />
 
           {/* Контент */}
-          <main className="flex-1 overflow-auto p-4">
+          <main className="flex-1 flex overflow-hidden">
             {children}
           </main>
 

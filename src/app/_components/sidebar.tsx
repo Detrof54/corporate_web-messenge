@@ -22,7 +22,7 @@ export function Sidebar({ userId }: { userId: string }) {
             href="/"
             active={pathname === "/"}
             icon={<MessageCircle size={20} />}
-            label="Чаты"
+            label="Все"
             />
 
             {data?.folder.map((folder) => (

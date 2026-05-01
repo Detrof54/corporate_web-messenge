@@ -1,7 +1,9 @@
 "use server";
 
 import { api } from "~/trpc/server";
+import { auth } from "~/server/auth";
 import { UserProfile } from "~/app/_components/profile/UserProfile";
+import { ChatsList } from "~/app/_components/chats/ChatsList";
 
 interface PageProps {
   params: {
@@ -10,22 +12,11 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = params;
+  const session = await auth();
 
-
-  const user = await api.userProfileRouter.getUserById({ id });
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white bg-gray-900">
-        <p>Пользователь не найден</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-      <UserProfile user={user} />
+  return(
+    <div className="h-full ">
+      <ChatsList userId = {session?.user.id} folder_id = {params.id} />
     </div>
-  );
+  )
 }

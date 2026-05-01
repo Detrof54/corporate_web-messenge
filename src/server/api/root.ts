@@ -2,6 +2,7 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { userProfileRouter } from "./routers/profile";
 import { sidebarRouter } from "./routers/sidebar";
+import { chatsRouter } from "./routers/chats";
 
 
 
@@ -13,7 +14,7 @@ import { sidebarRouter } from "./routers/sidebar";
 export const appRouter = createTRPCRouter({
     sidebar: sidebarRouter,
     profile: userProfileRouter,
-    
+    chats: chatsRouter,
 });
 
 // export type definition of API
