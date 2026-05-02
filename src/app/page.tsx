@@ -1,7 +1,8 @@
 import { api, HydrateClient } from "~/trpc/server";
 import { auth } from "~/server/auth";
-import { ChatsList } from "./_components/chats/ChatsList";
+import { ChatsList } from "./_components/chat/ChatsList";
 
+//ГЛАВНАЯ СТРАНИЦА
 //Все чаты отображает
 
 export default async function Home() {

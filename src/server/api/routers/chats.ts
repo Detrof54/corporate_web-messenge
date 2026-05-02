@@ -74,4 +74,48 @@ export const chatsRouter = createTRPCRouter({
         });
     }),
 
+    //только сообщения чата
+    getMessages: protectedProcedure
+    .input(z.object({
+        chatId: z.string(),
+    }))
+    .query(({ ctx, input }) => {
+        return ctx.db.message.findMany({
+        where: { chatId: input.chatId },
+        orderBy: { createdAt: "asc" },
+        include: {
+            sender: true,
+        },
+        });
+    }),
+
+    // чат с его информацией (сообщения,)
+    getChatInfo: publicProcedure
+    .input(z.object({ chatId: z.string() }))
+    .query(async ({ ctx, input }) => {
+        return ctx.db.chat.findUnique({
+        where: { id: input.chatId },
+        select: {
+            id: true,
+            image: true,
+            name:true,
+            chatType: true,
+            createdAt: true,
+            members: {
+                select: {
+                    user: {
+                        select: {
+                            id: true,
+                            image: true,
+                            firstname: true,
+                            surname: true,
+                            patronymic: true,
+                        }
+                    }
+                }
+            },
+        },
+        });
+    }),
+
 })
