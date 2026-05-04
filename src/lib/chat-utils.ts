@@ -18,6 +18,15 @@ interface Members {
   };
 }
 
+
+interface Chat3 {
+  members: Members[];
+  chatType: ChatType;
+  id: string;
+  name: string | null;
+  image: string | null;
+}
+
 interface Chat2 {
   members: Members[];
   chatType: ChatType;
@@ -42,7 +51,7 @@ interface Chat {
 
 
 // функция для отображения названия чата (для групп и каналов просто название, для диалога имя и фамилия собеседника)
-export function getChatTitle(chat: Chat | Chat2, userId?: string) {
+export function getChatTitle(chat: Chat | Chat2 | Chat3, userId?: string) {
   if (chat.chatType === ChatType.DIRECT) {
     const other = chat.members.find((m: Members) => m.user.id !== userId);
     return other
@@ -53,7 +62,7 @@ export function getChatTitle(chat: Chat | Chat2, userId?: string) {
 }
 
 // функция для аватарки пользователя/группы/канала (если нет то берутся по умолчанию)
-export function getChatAvatar(chat: Chat | Chat2, userId?: string) {
+export function getChatAvatar(chat: Chat | Chat2 | Chat3, userId?: string) {
   if (chat.chatType === ChatType.DIRECT) {
     const other = chat.members.find((m: Members) => m.user.id !== userId);
     return other?.user.image ?? "/default-avatar.jpg";

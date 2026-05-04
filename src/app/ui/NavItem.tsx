@@ -33,8 +33,13 @@ export function NavItem({ href, active, icon, label }: NavItemProps) {
   );
 }
 
-
-export function NavItemSettings({ href, active, icon, label }: NavItemProps) {
+type NavItemFromSettingsProps = {
+  href: string;
+  style: string;
+  icon: ReactNode;
+  label: string;
+};
+export function NavItemFromSettings({ href,style, icon, label }: NavItemFromSettingsProps) {
   return (
     <Link
       href={href}
@@ -43,11 +48,7 @@ export function NavItemSettings({ href, active, icon, label }: NavItemProps) {
         w-full px-4 py-3
         rounded-xl
         transition-all duration-200
-        ${
-          active
-            ? "text-red-500 hover:text-white hover:bg-gray-800"
-            : "text-gray-300 hover:text-white hover:bg-gray-800"
-        }
+        ${style}
       `}
     >
       <div className="text-lg">{icon}</div>
@@ -57,7 +58,11 @@ export function NavItemSettings({ href, active, icon, label }: NavItemProps) {
   );
 }
 
-export function NavItemEnd({ href, active, icon, label }: NavItemProps) {
+type NavItemBack = {
+  href: string;
+  icon: ReactNode;
+};
+export function NavItemBack({ href, icon, }: NavItemBack) {
   return (
     <Link
       href={href}
@@ -66,10 +71,12 @@ export function NavItemEnd({ href, active, icon, label }: NavItemProps) {
         w-1 h-1
         rounded-2xl
         transition-all duration-200
-        text-gray-500 hover:text-white hover:bg-gray-800"
+        text-gray-500 hover:text-white hover:bg-gray-800
       `}
     >
       <div className="text-xl">{icon}</div>
     </Link>
   );
 }
+
+

@@ -3,7 +3,7 @@ import type { $Enums, RoleSystem } from "@prisma/client";
 import { EditBaseProfileModal } from "./EditBaseProfileModal";
 import { DeleteProfileButton } from "./DeleteProfileButton";
 import Link from "next/link";
-import { NavItem, NavItemEnd } from "~/app/ui/NavItem";
+import { NavItem, NavItemBack } from "~/app/ui/NavItem";
 import { ArrowLeft } from "lucide-react";
 
 
@@ -59,11 +59,9 @@ export function UserProfile({user} : {user: UserProfileProps}) {
 
       <div className="">
         <div className="flex justify-start">
-          <NavItemEnd
+          <NavItemBack
               href={`/settings/`}
-              active={false}
               icon={<ArrowLeft size={30} />}
-              label=""
           />
         </div>
 
