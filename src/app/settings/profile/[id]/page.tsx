@@ -13,7 +13,7 @@ export default async function Page({ params }: PageProps) {
   const { id } = params;
 
 
-  const user = await api.userProfileRouter.getUserById({ id });
+  const user = await api.profile.getInfoUserById({ id });
 
   if (!user) {
     return (
@@ -24,8 +24,8 @@ export default async function Page({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-      <UserProfile user={user} />
+    <div className="w-full mx-auto">
+      <UserProfile user = {user} />
     </div>
   );
 }

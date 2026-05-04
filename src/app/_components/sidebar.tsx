@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api } from "~/trpc/react";
-import { NavItem } from "../ui/sidebar";
+import { NavItem } from "../ui/NavItem";
 import { Folder, MessageCircle, Bell, Settings } from "lucide-react";
 
 //Боковая панель навигации для приложения
@@ -12,7 +12,7 @@ export function Sidebar({ userId }: { userId: string }) {
 
     const { data, isLoading } = api.sidebar.getListFolders.useQuery();
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) return <div className="text-gray-500">Загрузка...</div>;
 
     return (
         <div className="flex flex-col w-20 h-full bg-gray-900 items-center py-4 gap-4">
@@ -42,8 +42,8 @@ export function Sidebar({ userId }: { userId: string }) {
                 />
             
                 <NavItem
-                    href={`/settings/${userId}`}
-                    active={false}
+                    href={`/settings/`}
+                    active={pathname.startsWith(`/settings`)}
                     icon={<Settings size={20} />}
                     label="Настройки"
                 />

@@ -2,34 +2,40 @@
 
 import { api } from "~/trpc/react";
 import { useRouter } from "next/navigation";
+import { Delete, ShoppingCart, Trash2, UserMinus, UserX } from "lucide-react";
 
 interface Props {
   userId: string;
-  pilotId?: string;
-  judgeId?: string;
 }
 
-export function DeleteProfileButton({ userId, pilotId, judgeId }: Props) {
+export function DeleteProfileButton({ userId }: Props) {
   const router = useRouter();
 
   const deleteProfile =
-    api.userProfileRouter.deleteProfile.useMutation({
+    api.profile.deleteProfile.useMutation({
       onSuccess: () => {
         router.refresh(); 
       },
     });
 
   return (
-    <button
-      className="mt-6 text-red-500"
-      onClick={() => {
+    <div>
+      <button
+        className="flex flex-col items-center justify-center
+          w-30 h-16
+          rounded-2xl
+          transition-all duration-200
+          text-red-500 hover:text-white hover:bg-gray-800"
+        onClick={() => {
 
-        deleteProfile.mutate({
-          id_user: userId,
-        });
-      }}
-    >
-      Удалить профиль
-    </button>
+          deleteProfile.mutate({
+            id_user: userId,
+          });
+        }}
+      >
+        <div className="text-xl"><Trash2 size={25} color="red"/></div>
+        <span className="text-xs font-medium">Удалить профиль</span>
+      </button>
+    </div>
   );
 }

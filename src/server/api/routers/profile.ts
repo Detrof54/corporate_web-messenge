@@ -3,16 +3,25 @@ import { z } from "zod";
 import { getId } from "~/app/api/auth/check";
 
 export const userProfileRouter = createTRPCRouter({
-  getUserById: publicProcedure
+
+  getInfoUserById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       return await ctx.db.user.findUnique({
         where: { id: input.id },
-        include: {
-          tournaments: true,
+        select: {
+          id: true,
+          image: true,
+          firstname: true,
+          surname: true,
+          patronymic: true,
+          email: true,
+          createdAt: true,
+          role: true,
         }
       });
     }),
+
 
   updateBaseProfile: publicProcedure
   .input(
@@ -20,6 +29,7 @@ export const userProfileRouter = createTRPCRouter({
       id: z.string(),
       firstname: z.string().min(1).nullable(),
       surname: z.string().min(1).nullable(),
+      patronymic: z.string().min(1).nullable(),
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -29,6 +39,7 @@ export const userProfileRouter = createTRPCRouter({
       data: {
         firstname: input.firstname,
         surname: input.surname,
+        patronymic: input.patronymic,
       },
     });
   }),
