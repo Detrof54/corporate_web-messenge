@@ -5,6 +5,10 @@ import { api } from "~/trpc/react";
 import { ChatType } from "@prisma/client";
 import { usePathname } from "next/navigation";
 import { formatTime, getChatAvatar, getChatTitle, getPreview } from "~/lib/chat-utils";
+import { useState } from "react";
+import { MenuCreateChatModal } from "./ChatCreate/MenuCreateChatModal";
+import { CreateChannelAndGroupModal } from "./ChatCreate/CreateChannelAndGroupModal";
+import { CreateDirectChatModal } from "./ChatCreate/CreateDirectChatModal";
 
 interface Props {
   userId?: string;
@@ -12,6 +16,10 @@ interface Props {
 }
 
 export function ChatsList({ userId, folder_id }: Props) {
+  const [openMenuCreateChat, setOpenMenuCreateChat] = useState(false);
+  const [createModalType, setCreateModalType] = useState<"GROUP" | "CHANNEL"| null>(null);
+  const [openDirectModal, setOpenDirectModal] = useState(false);
+
   const pathname = usePathname();
   const { data, isLoading } = api.chats.getChats.useQuery({
     folderId: folder_id,
@@ -32,7 +40,10 @@ export function ChatsList({ userId, folder_id }: Props) {
       <div className="flex items-center justify-between px-3 py-3">
         <h1 className="text-white text-xl font-semibold">Чаты</h1>
 
-        <button className="bg-blue-500 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-blue-600 transition">
+        <button 
+          onClick={() => setOpenMenuCreateChat(true)}
+          className="bg-blue-600 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-blue-500 transition"
+        >
           +
         </button>
       </div>
@@ -101,6 +112,42 @@ export function ChatsList({ userId, folder_id }: Props) {
           );
         })}
       </div>
+
+
+      <MenuCreateChatModal
+        open={openMenuCreateChat}
+        onClose={() => setOpenMenuCreateChat(false)}
+        onSelect={(type) => {
+
+          setOpenMenuCreateChat(false);
+
+          if (type === "channel") {
+            setCreateModalType(ChatType.CHANNEL);
+          }
+
+          if (type === "group") {
+            setCreateModalType(ChatType.GROUP);
+          }
+          if (type === "direct") {
+            setOpenDirectModal(true);
+          }
+        }}
+      />
+
+      {createModalType && (
+        <CreateChannelAndGroupModal
+          open={!!createModalType}
+          onClose={() => setCreateModalType(null)}
+          TypeChat={createModalType}
+        />
+      )}
+
+      <CreateDirectChatModal
+        open={openDirectModal}
+        onClose={() =>
+          setOpenDirectModal(false)
+        }
+      />
     </div>
   );
 }

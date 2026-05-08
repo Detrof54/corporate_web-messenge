@@ -83,6 +83,7 @@ model ChatMember {
   @@unique([userId, chatId])
 }
 enum ChatRole {
+  OWNER             //Владелец
   ADMIN        
   USER       
 }

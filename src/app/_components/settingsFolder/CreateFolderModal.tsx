@@ -15,6 +15,7 @@ export function CreateFolderModal({ userId, onClose }: Props) {
   const createFolder = api.settingFolder.createFolder.useMutation({
     onSuccess: () => {
       utils.settingFolder.getFolderList.invalidate();
+      utils.sidebar.getListFolders.invalidate()
       onClose();
     },
   });

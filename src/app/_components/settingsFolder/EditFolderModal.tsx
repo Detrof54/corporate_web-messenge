@@ -18,6 +18,7 @@ export function EditFolderModal({ folderId, currentName, onClose }: Props) {
     onSuccess: () => {
       utils.settingFolder.getFolderList.invalidate();
       utils.settingFolder.getFolderChats.invalidate();
+      utils.sidebar.getListFolders.invalidate()
       onClose();
     },
   });
