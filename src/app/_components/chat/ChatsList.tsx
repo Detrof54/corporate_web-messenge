@@ -28,7 +28,7 @@ export function ChatsList({ userId, folder_id }: Props) {
   if (isLoading) {
     return (
       <div className="w-80 h-full bg-gray-800 p-3 text-gray-400">
-        Загрузка...
+        ...
       </div>
     );
   }
@@ -77,7 +77,7 @@ export function ChatsList({ userId, folder_id }: Props) {
               className={`flex items-center gap-3 p-2 rounded-lg transition
                 ${
                   pathname.endsWith(`/chat/${chat.id}`) || pathname === `/chat/${chat.id}`
-                    ? "bg-gray-700"
+                    ? "bg-violet-500"
                     : "hover:bg-gray-700"
                 }
               `}
@@ -104,7 +104,13 @@ export function ChatsList({ userId, folder_id }: Props) {
                 </div>
 
                 {/* Последнее сообщение пользователя */}
-                <span className="text-gray-400 text-xs truncate">
+                <span className={` text-xs truncate 
+                  ${
+                    pathname.endsWith(`/chat/${chat.id}`) || pathname === `/chat/${chat.id}`
+                      ? "text-wite"
+                      : "text-gray-400"
+                  }` 
+                }>
                   {preview}
                 </span>
               </div>
@@ -151,3 +157,5 @@ export function ChatsList({ userId, folder_id }: Props) {
     </div>
   );
 }
+
+

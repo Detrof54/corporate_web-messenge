@@ -6,6 +6,10 @@ import Link from "next/link";
 import { NavItem, NavItemBack } from "~/app/ui/NavItem";
 import { ArrowLeft } from "lucide-react";
 
+interface Props {
+  user: UserProfileProps,
+  userCurrentId?: string,
+}
 
 export interface UserProfileProps {
   id: string;
@@ -48,8 +52,9 @@ function DateFromFormate (date: Date){
   }
 }
 
-export function UserProfile({user} : {user: UserProfileProps}) {
+export function UserProfile({user, userCurrentId} : Props) {
   const fullName = UserName(user);
+  const isOwner = user.id === userCurrentId
 
   return (
     <div className="w-full max-w-lg mx-auto bg-gradient-to-br from-gray-900 to-gray-800 p-8 rounded-3xl shadow-2xl  space-y-6">
@@ -60,13 +65,13 @@ export function UserProfile({user} : {user: UserProfileProps}) {
       <div className="">
         <div className="flex justify-start">
           <NavItemBack
-              href={`/settings/`}
+              href={isOwner ? `/settings/` :  `/`}
               icon={<ArrowLeft size={30} />}
           />
         </div>
 
         <div className="flex justify-end">
-          <EditBaseProfileModal user={user} />
+          {isOwner && <EditBaseProfileModal user={user} />}
         </div>
       </div>
       {/* Avatar */}
@@ -103,7 +108,7 @@ export function UserProfile({user} : {user: UserProfileProps}) {
       </div>
 
       <div className="flex justify-center gap-4">
-        <DeleteProfileButton userId={user.id} />
+        {isOwner && <DeleteProfileButton userId={user.id} />}
       </div>
 
     </div>

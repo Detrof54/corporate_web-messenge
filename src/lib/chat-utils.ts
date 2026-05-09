@@ -90,3 +90,18 @@ export function formatTime(date?: Date) {
     minute: "2-digit",
   });
 }
+
+
+
+export function formatMessageDate(date: Date) {
+  const now = new Date();
+
+  const sameYear =
+    date.getFullYear() === now.getFullYear();
+
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}

@@ -121,8 +121,7 @@ export const chatsRouter = createTRPCRouter({
     }),
 
 
-    
-//----------- КАНАЛ ИНФОРМАЦИИ-----------------
+
 
     // Создание канала информации
     createChannelAndGroup: protectedProcedure
@@ -340,6 +339,45 @@ export const chatsRouter = createTRPCRouter({
     });
     }),
 
-//----------- ГРУППА -----------------
+
+
+
+    deleteDirect: protectedProcedure
+    .input(
+        z.object({
+        chatId: z.string(),
+        })
+    )
+    .mutation(async ({ ctx, input }) => {
+
+        const currentUserId = ctx.session.user.id;
+
+        // Проверяем что пользователь участник
+        const chat = await ctx.db.chat.findFirst({
+        where: {
+            id: input.chatId,
+            chatType: ChatType.DIRECT,
+
+            members: {
+            some: {
+                userId: currentUserId,
+            },
+            },
+        },
+        });
+
+        if (!chat) {
+        throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Чат не найден",
+        });
+        }
+
+        return await ctx.db.chat.delete({
+        where: {
+            id: input.chatId,
+        },
+        });
+    }),
 
 })

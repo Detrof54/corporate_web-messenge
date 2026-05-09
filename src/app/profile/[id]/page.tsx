@@ -11,9 +11,10 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = params;
   const session = await auth();
   const userCurrentId = session?.user.id
+  const { id } = params;
+
 
   const user = await api.profile.getInfoUserById({ id });
 
