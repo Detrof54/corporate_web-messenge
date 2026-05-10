@@ -105,6 +105,7 @@ export const chatsRouter = createTRPCRouter({
             createdAt: true,
             members: {
                 select: {
+                    role: true,
                     user: {
                         select: {
                             id: true,

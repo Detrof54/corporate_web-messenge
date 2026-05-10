@@ -19,6 +19,7 @@ export function ChatsList({ userId, folder_id }: Props) {
   const [openMenuCreateChat, setOpenMenuCreateChat] = useState(false);
   const [createModalType, setCreateModalType] = useState<"GROUP" | "CHANNEL"| null>(null);
   const [openDirectModal, setOpenDirectModal] = useState(false);
+  const [search, setSearch] = useState("");
 
   const pathname = usePathname();
   const { data, isLoading } = api.chats.getChats.useQuery({
@@ -32,6 +33,16 @@ export function ChatsList({ userId, folder_id }: Props) {
       </div>
     );
   }
+
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const filteredChats = data?.filter((chat) => {
+    const title = getChatTitle(chat, userId);
+
+    return title
+      .toLowerCase()
+      .includes(normalizedSearch);
+  });
 
   return (
     <div className="w-80 h-full bg-gray-800 flex flex-col">
@@ -51,20 +62,27 @@ export function ChatsList({ userId, folder_id }: Props) {
       {/* Поле поиска */}
       <div className="px-3 pb-3">
         <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Поиск"
-          className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none"
+          className="
+            w-full bg-gray-700 text-white
+            rounded-lg px-3 py-2 outline-none
+          "
         />
       </div>
 
       {/* Отображение списка чатов */}
       <div className="flex flex-col gap-1 overflow-auto">
-        {data?.map((chat) => {
+        {filteredChats?.map((chat) => {
           const lastMessage = chat.messages[0];
 
           const title = getChatTitle(chat, userId);
           const avatar = getChatAvatar(chat, userId);
           const preview = getPreview(lastMessage?.text);
           const time = formatTime(lastMessage?.createdAt);
+
+          
 
           return (
             <Link

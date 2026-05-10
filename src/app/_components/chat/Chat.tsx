@@ -7,7 +7,7 @@ import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { SideMenuChat } from "./MenuChat.tsx/SideMenuChat";
-import { ChatType } from "@prisma/client";
+import { ChatRole, ChatType } from "@prisma/client";
 
 
 export function Chat({ userId }: { userId: string | undefined}) {
@@ -16,19 +16,20 @@ export function Chat({ userId }: { userId: string | undefined}) {
   const params = useParams();
   const chatId = (params.chatId ?? params.id) as string;
   
-  const { data: messages, isLoading } = api.chats.getMessages.useQuery({
-    chatId,
-  });
-  const { data: chat } = api.chats.getChatInfo.useQuery({
-    chatId,
-  });
+  const { data: messages, isLoading } = api.chats.getMessages.useQuery({ chatId,});
+  const { data: chat } = api.chats.getChatInfo.useQuery({chatId,});
 
   if (isLoading) {
-    return <div className="flex-1 bg-gray-900 text-white p-4">...</div>;
+    return <div className="flex-1 bg-gray-900 text-white p-4"></div>;
   }
+
+  const UserCurrent = chat?.members.find((member) => userId === member.user.id)
 
   const isGroup = chat?.chatType === "GROUP"
   const interlocutorId = chat?.chatType === ChatType.DIRECT ? chat.members.find(m => m.user.id !== userId)?.user.id : undefined;
+
+  const RightToPublic = (chat?.chatType !== ChatType.CHANNEL || UserCurrent?.role === ChatRole.OWNER 
+    || UserCurrent?.role === ChatRole.ADMIN)
 
   return (
     <div className="flex flex-col flex-1 bg-gray-900">
@@ -41,7 +42,7 @@ export function Chat({ userId }: { userId: string | undefined}) {
               href={
                 chat?.chatType === ChatType.DIRECT && interlocutorId
                   ? `/profile/${interlocutorId}`
-                  : `/`
+                  : `/profileGroupOrChannel/${chat.id}`
               }
               className="flex items-center gap-3"
             >
@@ -168,15 +169,17 @@ export function Chat({ userId }: { userId: string | undefined}) {
           </div>
 
           {/* Строка ввода */}
-          <div className="h-14 border-t border-gray-800 flex items-center gap-2 px-3">
-            <input
-              placeholder="Сообщение"
-              className="flex-1 bg-gray-800 text-white px-3 py-2 rounded-lg outline-none"
-            />
-            <button className="bg-purple-500 w-10 h-10 rounded-full">
-              ↑
-            </button>
-          </div>
+          {RightToPublic &&
+            <div className="h-14 border-t border-gray-800 flex items-center gap-2 px-3">
+              <input
+                placeholder="Сообщение"
+                className="flex-1 bg-gray-800 text-white px-3 py-2 rounded-lg outline-none"
+              />
+              <button className="bg-purple-500 w-10 h-10 rounded-full">
+                ↑
+              </button>
+            </div>
+          }
 
         </div>
       </div>
