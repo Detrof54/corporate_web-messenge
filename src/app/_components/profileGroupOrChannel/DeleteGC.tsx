@@ -9,15 +9,12 @@ interface Props {
   chatId: string;
 }
 
-export function DeleteGC({
-  chatId,
-}: Props) {
+export function DeleteGC({chatId,}: Props) {
   const router = useRouter();
 
   const utils = api.useUtils();
 
-  const deleteChat =
-    api.profileGC.deleteGroupChannel.useMutation({
+  const deleteChat = api.profileGC.deleteGroupChannel.useMutation({
       onSuccess: async () => {
 
         await utils.chats.getChats.invalidate();
@@ -33,10 +30,9 @@ export function DeleteGC({
           chatId,
         })
       }
-      className="flex flex-col items-center justify-center
-          w-30 h-16
-          rounded-2xl
-          transition-all duration-200
+      className="
+          flex flex-col items-center justify-center
+          w-30 h-16 rounded-2xl transition-all duration-200
           text-red-500 hover:text-white hover:bg-gray-800"
     >
       <div className="text-xl"><Trash2 size={25} color="red"/></div>

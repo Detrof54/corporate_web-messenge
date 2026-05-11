@@ -12,12 +12,7 @@ interface Props {
   existingMemberIds: string[];
 }
 
-export function AddMembersGCModal({
-  open,
-  onClose,
-  chatId,
-  existingMemberIds,
-}: Props) {
+export function AddMembersGCModal({open, onClose, chatId, existingMemberIds,}: Props) {
   const utils = api.useUtils();
 
   const { data: users } = api.chats.getUsers.useQuery();
@@ -36,9 +31,8 @@ export function AddMembersGCModal({
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
-
     return users
-      .filter((u) => !existingMemberIds.includes(u.id)) // ❗ убираем уже добавленных
+      .filter((u) => !existingMemberIds.includes(u.id)) 
       .filter((u) => {
         const fullName =
           `${u.firstname ?? ""} ${u.surname ?? ""}`.toLowerCase();
@@ -55,23 +49,15 @@ export function AddMembersGCModal({
       onClick={onClose}
     >
       <div
-        className="
-          w-full max-w-xl
-          bg-gray-900
-          rounded-3xl
-          p-6
-          flex flex-col gap-4
-          max-h-[80vh]
-        "
+        className="w-full max-w-xl bg-gray-900 rounded-3xl p-6 flex flex-col gap-4 max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
 
-        {/* HEADER */}
+        {/* Заголовок */}
         <div className="flex justify-between items-center">
           <h2 className="text-white text-xl font-bold">
             Добавить участников
           </h2>
-
           <button
             onClick={onClose}
             className="p-2 rounded-xl hover:bg-gray-800"
@@ -80,27 +66,18 @@ export function AddMembersGCModal({
           </button>
         </div>
 
-        {/* SEARCH */}
+        {/* Поисковая строка */}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Поиск по имени..."
-          className="
-            w-full
-            bg-gray-800
-            text-white
-            rounded-2xl
-            px-4 py-3
-            outline-none
-          "
+          className="w-full bg-gray-800 text-white rounded-2xl px-4 py-3 outline-none"
         />
 
-        {/* USERS LIST */}
+        {/* Список пользователей */}
         <div className="flex flex-col gap-2 overflow-y-auto pr-1 max-h-[50vh]">
-
           {filteredUsers.map((user) => {
             const selectedUser = selected.includes(user.id);
-
             return (
               <button
                 key={user.id}
@@ -111,16 +88,8 @@ export function AddMembersGCModal({
                       : [...prev, user.id]
                   );
                 }}
-                className={`
-                  flex items-center gap-3
-                  p-3 rounded-2xl
-                  transition
-                  ${
-                    selectedUser
-                      ? "bg-violet-600"
-                      : "bg-gray-800 hover:bg-gray-700"
-                  }
-                `}
+                className={`flex items-center gap-3 p-3 rounded-2xl transition
+                  ${selectedUser ? "bg-violet-600" : "bg-gray-800 hover:bg-gray-700"}`}
               >
                 <img
                   src={user.image ?? "/default-avatar.jpg"}
@@ -139,21 +108,12 @@ export function AddMembersGCModal({
               </button>
             );
           })}
-
         </div>
 
-        {/* ACTIONS */}
         <div className="flex gap-3 pt-2">
-
           <button
             onClick={onClose}
-            className="
-              flex-1 py-3
-              rounded-2xl
-              bg-gray-800
-              text-white
-              hover:bg-gray-700
-            "
+            className="flex-1 py-3 rounded-2xl bg-gray-800 text-white hover:bg-gray-700"
           >
             Отмена
           </button>
@@ -168,19 +128,13 @@ export function AddMembersGCModal({
               })
             }
             className="
-              flex-1 py-3
-              rounded-2xl
-              bg-violet-600
-              text-white
-              hover:bg-violet-500
-              disabled:opacity-50
+              flex-1 py-3 rounded-2xl bg-violet-600
+              text-white hover:bg-violet-500 disabled:opacity-50
             "
           >
             Добавить
           </button>
-
         </div>
-
       </div>
     </div>
   );

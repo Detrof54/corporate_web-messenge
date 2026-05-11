@@ -16,7 +16,7 @@ declare module "next-auth" {
     user: {
       id: string;
       // ...other properties
-      role: $Enums.Role;
+      role: $Enums.RoleSystem;
     } & DefaultSession["user"];
   }
 
@@ -35,7 +35,7 @@ export const authConfig = {
   providers: [
     EmailProvider({
       server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIK_FROM,
+      from: process.env.EMAIL_FROM,
       sendVerificationRequest: sendVerificationRequest,
     })
   ],

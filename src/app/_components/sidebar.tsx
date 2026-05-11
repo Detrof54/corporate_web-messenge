@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api } from "~/trpc/react";
 import { NavItem } from "../ui/NavItem";
-import { Folder, MessageCircle, Bell, Settings } from "lucide-react";
+import { Folder, MessageCircle, Bell, Settings, ShieldUser } from "lucide-react";
 
 //Боковая панель навигации для приложения
 export function Sidebar({ userId }: { userId: string }) {
@@ -34,6 +34,13 @@ export function Sidebar({ userId }: { userId: string }) {
             ))}
         
             <div className="mt-auto flex flex-col gap-4" >
+                <NavItem
+                    href={`/administration/`}
+                    active={pathname.startsWith(`/administration`)}
+                    icon={<ShieldUser size={20} />}
+                    label="Админи- стрирование"
+                />
+
                 <NavItem
                     href={`/notifications/${userId}`}
                     active={false}

@@ -5,6 +5,7 @@ import { sidebarRouter } from "./routers/sidebar";
 import { chatsRouter } from "./routers/chats";
 import { settingFolderRouter } from "./routers/settingFolders";
 import { profileGCPageRouter } from "./routers/profileGroupOrChannel";
+import { administrationPageRouter } from "./routers/administation";
 
 
 
@@ -19,6 +20,7 @@ export const appRouter = createTRPCRouter({
     chats: chatsRouter,
     settingFolder: settingFolderRouter,
     profileGC: profileGCPageRouter,
+    administration: administrationPageRouter,
 });
 
 // export type definition of API
