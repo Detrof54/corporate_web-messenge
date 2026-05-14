@@ -8,9 +8,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { SideMenuChat } from "./MenuChat.tsx/SideMenuChat";
 import { ChatRole, ChatType } from "@prisma/client";
+import { useSocket } from "~/providers/socket-provider";
 
 
 export function Chat({ userId }: { userId: string | undefined}) {
+  const socket = useSocket();
+
   const [openMenu, setOpenMenu] = useState(false);
 
   const params = useParams();

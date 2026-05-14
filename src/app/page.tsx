@@ -9,7 +9,7 @@ export default async function Home() {
   const session = await auth();
 
   return (
-      <div className="">
+      <div className="h-full">
         <ChatsList userId = {session?.user.id}/>
       </div>
     )

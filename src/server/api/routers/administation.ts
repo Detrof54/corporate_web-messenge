@@ -1,6 +1,5 @@
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { z } from "zod";
-import { getId } from "~/app/api/auth/check";
 import { TRPCError } from "@trpc/server";
 import { ChatRole } from "@prisma/client";
 

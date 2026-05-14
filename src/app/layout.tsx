@@ -6,6 +6,8 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
 import { MyApp } from "./_components/main";
 
+import { SocketProvider } from "~/providers/socket-provider";
+
 export const metadata: Metadata = {
   title: "Telegraph",
   description: "Корпоративный web-мессенджер",
@@ -21,10 +23,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable}`}>
+    <html lang="en" className={geist.variable}>
       <body>
         <TRPCReactProvider>
-          <MyApp>{children}</MyApp>
+          <SocketProvider>
+            <MyApp>{children}</MyApp>
+          </SocketProvider>
         </TRPCReactProvider>
       </body>
     </html>

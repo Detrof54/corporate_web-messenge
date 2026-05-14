@@ -6,6 +6,8 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
+
+  
   "scripts": {
     "build": "next build",
     "check": "next lint && tsc --noEmit",
@@ -14,7 +16,8 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "dev": "next dev --turbo",
+    "dev2": "next dev --turbo",
+    "dev": "tsx server.ts", 
     "deb": "next dev",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
@@ -46,8 +49,9 @@
     "romanov": "link:",
     "rss-parser": "^3.13.0",
     "server-only": "^0.0.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "superjson": "^2.2.1",
-    "tsx": "^4.20.4",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -70,6 +74,7 @@
     "prettier-plugin-tailwindcss": "^0.6.11",
     "prisma": "^6.5.0",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.20.4",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0",
     "vite-tsconfig-paths": "^5.1.4",

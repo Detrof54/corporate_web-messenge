@@ -26,11 +26,11 @@ export function ChatsList({ userId, folder_id }: Props) {
     folderId: folder_id,
   });
 
+
+
   if (isLoading) {
     return (
-      <div className="w-80 h-full bg-gray-800 p-3 text-gray-400">
-        ...
-      </div>
+      <div className="w-80 h-full bg-gray-800 p-3 text-gray-400"></div>
     );
   }
 

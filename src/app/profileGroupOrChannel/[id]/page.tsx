@@ -15,10 +15,7 @@ export default async function Page({params,}:PageProps) {
   const session = await auth();
 
   return (
-    <div className="">
-      <h1 className=" text-2xl font-bold text-white mt-4 text-center break-words min-h-[36px] w-full">
-        Админнистрирование
-      </h1>
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center py-6">
       <ProfileGC
         chatId={id}
         currentUserId={session?.user.id}

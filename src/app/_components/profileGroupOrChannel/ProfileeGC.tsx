@@ -89,9 +89,10 @@ export function ProfileGC({ chatId, currentUserId }: Props){
     return <div className="text-white"></div>
     
   return (
-    <div className="h-screen overflow-y-auto bg-gray-950 px-4 py-6">
+    <div className="min-h-screen bg-gray-950 px-4 py-10 flex justify-center">
+  <div className="w-full max-w-3xl">
       <div className="min-h-full flex items-start justify-center">
-        <div className="w-full max-w-3xl bg-gray-900 rounded-3xl p-6 flex flex-col gap-6 flex-shrink-0">
+        <div className="bg-gray-900 rounded-3xl p-6 flex flex-col gap-6">
 
           {/* ЗАГОЛОВОК */}
           <div className="flex justify-center">
@@ -329,6 +330,7 @@ export function ProfileGC({ chatId, currentUserId }: Props){
         chatId={chat.id}
         members={chat.members}
       />
+    </div>
     </div>
   );
 }

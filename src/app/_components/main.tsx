@@ -19,7 +19,7 @@ export async function MyApp({
           <Sidebar userId={session.user.id} />
 
           {/* Контент */}
-          <main className="flex-1 flex overflow-hidden">
+          <main className="flex-1 overflow-y-auto bg-gray-900">
             {children}
           </main>
 
