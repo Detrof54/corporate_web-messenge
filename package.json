@@ -6,8 +6,6 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
-
-  
   "scripts": {
     "build": "next build",
     "check": "next lint && tsc --noEmit",
@@ -17,7 +15,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "dev2": "next dev --turbo",
-    "dev": "tsx server.ts", 
+    "dev": "tsx server.ts",
     "deb": "next dev",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
@@ -39,6 +37,7 @@
     "@trpc/server": "^11.0.0",
     "cheerio": "^1.1.2",
     "clsx": "^2.1.1",
+    "cookie": "^1.1.1",
     "lucide-react": "^0.542.0",
     "next": "^15.2.3",
     "next-auth": "5.0.0-beta.25",

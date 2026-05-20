@@ -22,9 +22,11 @@ declare module "next-auth" {
 
   // interface User {
   //   // ...other properties
-  //   role: $Enums.Role;
+  //   role: $Enums.RoleSystem;
   // }
 }
+
+
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
@@ -50,3 +52,4 @@ export const authConfig = {
     }),
   },
 } satisfies NextAuthConfig;
+

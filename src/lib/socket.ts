@@ -5,5 +5,6 @@ export const socket = io(
 
   {
     autoConnect: false,
+    withCredentials: true,
   }
 );
