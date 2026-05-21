@@ -10,6 +10,9 @@ import { MenuCreateChatModal } from "./ChatCreate/MenuCreateChatModal";
 import { CreateChannelAndGroupModal } from "./ChatCreate/CreateChannelAndGroupModal";
 import { CreateDirectChatModal } from "./ChatCreate/CreateDirectChatModal";
 
+import { useSocket } from "~/providers/socket-provider";
+import { useEffect } from "react";
+
 interface Props {
   userId?: string;
   folder_id?: string;
@@ -25,8 +28,6 @@ export function ChatsList({ userId, folder_id }: Props) {
   const { data, isLoading } = api.chats.getChats.useQuery({
     folderId: folder_id,
   });
-
-
 
   if (isLoading) {
     return (

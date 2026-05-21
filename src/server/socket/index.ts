@@ -1,7 +1,7 @@
-//новое
 import { Server as HTTPServer } from "http"
 import { Server } from "socket.io"
 import { socketAuthMiddleware } from "./middleware/auth"
+import { onlineUsers } from "./store";
 
 let io: Server | null = null    
 
@@ -20,8 +20,26 @@ export const initSocket = (server: HTTPServer) => {
   io.on("connection", (socket) => {
     console.log("🟢Connected user:", socket.data.user);
 
+    //добавление пользователей в список пользователей онлайн
+    onlineUsers.set(socket.data.user.id, socket.id);
+
+    console.log("ℹ️ ONLINE USERS:", onlineUsers)
+
+    //Рассылка события того что пользователь в онлайн
+    io?.emit("user_online", {
+      userId: socket.data.user.id,
+    });
+
     socket.on("disconnect", () => {
-      console.log("🔴Disconnected:", socket.data.user.id);
+      console.log("🔴Disconnected:", socket.data.user.email);
+      // Удаление пользователя из списка онлайн при отключении
+      onlineUsers.delete(socket.data.user.id);
+      console.log("ℹ️ ONLINE USERS:", onlineUsers);
+
+      //Рассылка события того что пользователь в оффлайн
+      io?.emit("user_offline", {
+        userId: socket.data.user.id,
+      });
     });
   });
 
@@ -37,46 +55,3 @@ export const getIO = () => {
 }
 
 
-
-
-
-// старое
-// import { Server as HTTPServer } from "http"
-// import { Server } from "socket.io"
-
-// let io: Server | null = null    // Глобальная переменная для хранения единственного экземпляра socket.io.
-
-// // Функция инициализации socket.io. Принимает уже существующий HTTP сервер (тот, на котором работает Next.js).
-// export const initSocket = (server: HTTPServer) => {
-//   if (io) return io    //защита от пересоздания
-
-// // Создаем socket.io сервер
-//   io = new Server(server, {
-//     // Настройки CORS для websocket/polling запросов
-//     cors: {
-//       origin: "http://localhost:3000",    // Разрешаем подключения только с frontend на localhost:3000.
-//       credentials: true,                  // Разрешаем отправку cookies/auth headers.
-//     },
-//   })
-
-//   // Событие нового подключения клиента. Срабатывает каждый раз,когда frontend подключается через socket.io-client.
-//   io.on("connection", (socket) => {
-//     console.log("🔵User connected:", socket.id)
-
-//     socket.on("disconnect", (reason) => {             // Слушаем событие отключения клиента.
-//       console.log("🔴User disconnected:", socket.id)
-//       console.log("🟠Reason:", reason)
-//     })
-//   })
-
-//   return io       // Возвращаем экземпляр socket.io сервера.
-// }
-
-// // Функция для получения текущего экземпляра socket.io из любого места проекта.
-// export const getIO = () => {
-//   if (!io) {
-//     throw new Error("‼️Socket.io not initialized")
-//   }
-
-//   return io
-// }
