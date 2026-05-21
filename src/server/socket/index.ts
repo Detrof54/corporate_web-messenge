@@ -2,6 +2,7 @@ import { Server as HTTPServer } from "http"
 import { Server } from "socket.io"
 import { socketAuthMiddleware } from "./middleware/auth"
 import { onlineUsers } from "./store";
+import { registerChatHandlers } from "./handlers/chat";
 
 let io: Server | null = null    
 
@@ -20,24 +21,24 @@ export const initSocket = (server: HTTPServer) => {
   io.on("connection", (socket) => {
     console.log("🟢Connected user:", socket.data.user);
 
-    //добавление пользователей в список пользователей онлайн
-    onlineUsers.set(socket.data.user.id, socket.id);
+    onlineUsers.set(socket.data.user.id, socket.id);      //добавление пользователей в список пользователей онлайн
+    registerChatHandlers(socket);                         //
 
     console.log("ℹ️ ONLINE USERS:", onlineUsers)
 
-    //Рассылка события того что пользователь в онлайн
-    io?.emit("user_online", {
+    io?.emit("user_online", {     //Рассылка события того что пользователь в онлайн
       userId: socket.data.user.id,
     });
 
+
+
     socket.on("disconnect", () => {
       console.log("🔴Disconnected:", socket.data.user.email);
-      // Удаление пользователя из списка онлайн при отключении
-      onlineUsers.delete(socket.data.user.id);
+      
+      onlineUsers.delete(socket.data.user.id);            // Удаление пользователя из списка онлайн при отключении
       console.log("ℹ️ ONLINE USERS:", onlineUsers);
 
-      //Рассылка события того что пользователь в оффлайн
-      io?.emit("user_offline", {
+      io?.emit("user_offline", {            //Рассылка события того что пользователь в оффлайн
         userId: socket.data.user.id,
       });
     });

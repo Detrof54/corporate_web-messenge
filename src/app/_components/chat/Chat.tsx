@@ -8,8 +8,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { SideMenuChat } from "./MenuChat.tsx/SideMenuChat";
 import { ChatRole, ChatType } from "@prisma/client";
-import { useSocket } from "~/providers/socket-provider";
 
+import { useEffect } from "react";
+import { useSocket } from "~/providers/socket-provider";
 
 export function Chat({ userId }: { userId: string | undefined}) {
   const socket = useSocket();
@@ -21,6 +22,15 @@ export function Chat({ userId }: { userId: string | undefined}) {
   
   const { data: messages, isLoading } = api.chats.getMessages.useQuery({ chatId,});
   const { data: chat } = api.chats.getChatInfo.useQuery({chatId,});
+
+  //подключение к комнате чата
+  useEffect(() => {
+    socket.emit("join_chat", chatId);
+
+    return () => {
+      socket.emit("leave_chat", chatId);
+    };
+  }, [chatId, socket]);
 
   if (isLoading) {
     return <div className="flex-1 bg-gray-900 text-white p-4"></div>;
