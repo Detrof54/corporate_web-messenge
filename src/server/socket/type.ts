@@ -4,3 +4,8 @@ export interface SocketUser {
     email: string;
     name?: string | null;
 }
+
+export interface SocketData {
+  user: SocketUser;
+  relatedUsers: string[];
+}

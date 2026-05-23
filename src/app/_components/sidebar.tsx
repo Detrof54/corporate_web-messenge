@@ -12,7 +12,7 @@ export function Sidebar({ userId }: { userId: string }) {
 
     const { data, isLoading } = api.sidebar.getListFolders.useQuery();
 
-    if (isLoading) return <div className="text-gray-500">...</div>;
+    if (isLoading) return <div className="text-gray-500"></div>;
 
     return (
         <div className="flex flex-col w-20 h-full bg-gray-900 items-center py-4 gap-4">

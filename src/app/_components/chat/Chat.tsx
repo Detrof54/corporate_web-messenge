@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { useSocket } from "~/providers/socket-provider";
 
 export function Chat({ userId }: { userId: string | undefined}) {
-  const socket = useSocket();
+  const { socket, onlineUsers } = useSocket();
 
   const [openMenu, setOpenMenu] = useState(false);
 
@@ -41,6 +41,8 @@ export function Chat({ userId }: { userId: string | undefined}) {
   const isGroup = chat?.chatType === "GROUP"
   const interlocutorId = chat?.chatType === ChatType.DIRECT ? chat.members.find(m => m.user.id !== userId)?.user.id : undefined;
 
+  const isOnline = interlocutorId && onlineUsers.has(interlocutorId);
+
   const RightToPublic = (chat?.chatType !== ChatType.CHANNEL || UserCurrent?.role === ChatRole.OWNER 
     || UserCurrent?.role === ChatRole.ADMIN)
 
@@ -63,9 +65,23 @@ export function Chat({ userId }: { userId: string | undefined}) {
                 src={getChatAvatar(chat, userId)}
                 className="w-8 h-8 rounded-full"
               />
-              <span className="text-white font-semibold">
-                {getChatTitle(chat, userId)}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-white font-semibold">
+                  {getChatTitle(chat, userId)}
+                </span>
+
+                {chat?.chatType === ChatType.DIRECT && (
+                  <span
+                    className={`text-xs ${
+                      isOnline
+                        ? "text-purple-400"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {isOnline ? "в сети" : "не в сети"}
+                  </span>
+                )}
+              </div>
             </Link>
           )}
         </div>

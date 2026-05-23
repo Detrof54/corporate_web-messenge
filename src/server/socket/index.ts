@@ -3,44 +3,89 @@ import { Server } from "socket.io"
 import { socketAuthMiddleware } from "./middleware/auth"
 import { onlineUsers } from "./store";
 import { registerChatHandlers } from "./handlers/chat";
+import { addOnlineUser, removeOnlineUser } from "./handlers/status";
+import { db } from "../db";
+import type { SocketData } from "./type";
 
 let io: Server | null = null    
 
 export const initSocket = (server: HTTPServer) => {
   if (io) return io    
 
-  io = new Server(server, {
+  io = new Server<SocketData>(server, {
     cors: {
       origin: "http://localhost:3000",    
       credentials: true,                  
     },
+
+    pingTimeout: 20000,
+    pingInterval: 25000,
   })
 
   io.use(socketAuthMiddleware);
 
-  io.on("connection", (socket) => {
-    console.log("🟢Connected user:", socket.data.user);
+  io.on("connection", async (socket) => {
+    const user = socket.data.user;
 
-    onlineUsers.set(socket.data.user.id, socket.id);      //добавление пользователей в список пользователей онлайн
-    registerChatHandlers(socket);                         //
+    console.log("🟢Connected user:", user.email);
+    
+    registerChatHandlers(socket); 
+
+    socket.join(`user:${user.id}`);
+    addOnlineUser(user.id, socket.id)
+    const memberships = await db.chatMember.findMany({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        chat: {
+          include: {
+            members: true,
+          },
+        },
+      },
+    });
+    const relatedUsers = new Set<string>();
+    for (const membership of memberships) {
+      for (const member of membership.chat.members) {
+        if (member.userId !== user.id) {
+          relatedUsers.add(member.userId);
+        }
+      }
+    }
+
+    socket.data.relatedUsers = [...relatedUsers]
+
+    for (const relatedUserId of relatedUsers) {
+      io?.to(`user:${relatedUserId}`).emit("user_online", {
+        userId: user.id,
+      });
+    }                       
+
+
+    const onlineRelatedUsers = [...relatedUsers].filter((id) =>
+      onlineUsers.has(id),
+    );
+
+    socket.emit("online_users", onlineRelatedUsers);
 
     console.log("ℹ️ ONLINE USERS:", onlineUsers)
 
-    io?.emit("user_online", {     //Рассылка события того что пользователь в онлайн
-      userId: socket.data.user.id,
-    });
-
-
-
     socket.on("disconnect", () => {
-      console.log("🔴Disconnected:", socket.data.user.email);
+      console.log("🔴Disconnected:", user.email);
       
-      onlineUsers.delete(socket.data.user.id);            // Удаление пользователя из списка онлайн при отключении
-      console.log("ℹ️ ONLINE USERS:", onlineUsers);
+      const becameOffline = removeOnlineUser(user.id, socket.id,);
+      if (!becameOffline) {
+        return;
+      }
 
-      io?.emit("user_offline", {            //Рассылка события того что пользователь в оффлайн
-        userId: socket.data.user.id,
-      });
+      for (const relatedUserId of socket.data.relatedUsers){
+        io?.to(`user:${relatedUserId}`).emit("user_offline",{
+          userId: user.id,
+        });
+      }
+
+      console.log("ℹ️ ONLINE USERS:", onlineUsers);
     });
   });
 
