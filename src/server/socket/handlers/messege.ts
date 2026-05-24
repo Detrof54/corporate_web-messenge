@@ -35,10 +35,49 @@ export const registerMessageHandlers = (socket: Socket,) => {
         // Отправляем обратно отправителю
         socket.emit("new_message",message,);
 
+
       } 
       catch(error) {
         console.error("❌ send_message error:",error,);
       }
     },);
+
+    socket.on("read_chat", async ({ chatId }) => {
+        const user = socket.data.user;
+        const now = new Date();
+        try {
+          await db.chatMember.updateMany({
+            where: {
+              userId: user.id,
+              chatId,
+            },
+
+            data: {
+              lastReadAt: now,
+            },
+          });
+
+          const room = `chat:${chatId}`;
+
+          socket.to(room).emit(
+            "chat_read_update",
+            {
+              userId: user.id,
+              chatId,
+              lastReadAt: now,
+            },
+          );
+
+        } catch (error) {
+
+          console.error(
+            "❌ read_chat error:",
+            error,
+          );
+
+        }
+
+      },
+    );
 
 };

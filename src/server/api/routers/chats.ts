@@ -114,7 +114,8 @@ export const chatsRouter = createTRPCRouter({
                             surname: true,
                             patronymic: true,
                         }
-                    }
+                    },
+                    lastReadAt:true,
                 }
             },
         },

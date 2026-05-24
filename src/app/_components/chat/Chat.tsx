@@ -3,7 +3,7 @@
 import { api } from "~/trpc/react";
 import { useParams } from "next/navigation";
 import { getChatTitle, getChatAvatar, formatTime, formatMessageDate } from "~/lib/chat-utils";
-import { MoreVertical } from "lucide-react";
+import { Check, CheckCheck, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { SideMenuChat } from "./MenuChat.tsx/SideMenuChat";
@@ -12,31 +12,42 @@ import { useRef } from "react";
 import { useEffect } from "react";
 import { useSocket } from "~/providers/socket-provider";
 
-export function Chat({ userId }: { userId: string | undefined}) {
-  const { socket, onlineUsers } = useSocket();
-  const [openMenu, setOpenMenu] = useState(false);
-  const [localMessages, setLocalMessages] = useState<any[]>([]);    //сообщения
-  const [messageText, setMessageText] = useState("");               //сообщение для отправки
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+//Функция для определения статуса сообщения
+function getMessageStatus(msg: any, otherUserLastReadAt?: Date | null,){
+  if (msg.pending) return "sent";       
+  if (otherUserLastReadAt && new Date(msg.createdAt) <= new Date(otherUserLastReadAt))
+    return "read";
+  if (msg.deliveredAt) return "delivered";
+  return "sent";
+}
 
+
+export function Chat({ userId }: { userId: string | undefined}) {
   const params = useParams();
   const chatId = (params.chatId ?? params.id) as string;
 
+  const { socket, onlineUsers } = useSocket();                        //сокет, пользователи в онлайн
+  const [openMenu, setOpenMenu] = useState(false);                    //флаг открытия бокового меню
+  const [localMessages, setLocalMessages] = useState<any[]>([]);      //сообщения из БД + real time
+  const [messageText, setMessageText] = useState("");                 //сообщение для отправки
+  const [otherUserLastReadAt,setOtherUserLastReadAt,] = useState<Date | null>(null);    //последнее прочтенное сообщение по дате другим пользователем
+  const [myLastReadAt, setMyLastReadAt] = useState<Date | null>(null);    //последнее прочтенное сообщение по дате текущим пользователем
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);             //для автоскролинга
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", });
   };
 
-  const { data: messages, isLoading } = api.chats.getMessages.useQuery({ chatId,});
   useEffect(() => {
-    if (messages) {
-      setLocalMessages(messages);
-    }
-  }, [messages]);
+    scrollToBottom();
+  }, [localMessages]);
 
+  const { data: messages, isLoading } = api.chats.getMessages.useQuery({ chatId,});   
   const { data: chat } = api.chats.getChatInfo.useQuery({chatId,});
-  
+
+  const otherMember = chat?.members.find((m) => m.user.id !== userId);     //находим собеседника для direct чата работает
+  const myMember = chat?.members.find((m) => m.user.id === userId);
+
   //подключение к комнате чата
   useEffect(() => {
     socket.emit("join_chat", chatId);
@@ -46,20 +57,49 @@ export function Chat({ userId }: { userId: string | undefined}) {
     };
   }, [chatId, socket]);
 
+
+
+  useEffect(() => {           //помещаем сообщения из БД в состояние
+    if (messages) 
+      setLocalMessages(messages);
+  }, [messages]);
+
   useEffect(() => {
+    if (myMember?.lastReadAt) 
+      setMyLastReadAt(new Date(myMember.lastReadAt));
+  }, [myMember]);
+
+  useEffect(() => {                 //чат прочитан текущим пользователем
+    if (!chatId) return;
+    const now = new Date();
+    setMyLastReadAt(now);
+    socket.emit("read_chat", {
+      chatId,
+    });
+  }, [localMessages,chatId,socket,userId,otherUserLastReadAt,]);
+
+  useEffect(() => {                 //чат прочитан собеседником 
+    if (otherMember?.lastReadAt) 
+      setOtherUserLastReadAt(new Date(otherMember.lastReadAt),);
+  }, [otherMember]);
+
+  useEffect(() => {
+    socket.on("chat_read_update",({userId: readerId,lastReadAt,}) => {
+      if (readerId === userId) return;
+      setOtherUserLastReadAt(new Date(lastReadAt));
+    });
+    return () => {
+      socket.off("chat_read_update");
+    };
+  }, [socket, userId]);
+
+  useEffect(() => {                           //новые сообщения
     socket.on("new_message", (message) => {
       setLocalMessages((prev) => {
-        const exists = prev.some(
-          (msg) => msg.id === message.id,
-        );
+        const exists = prev.some((msg) => msg.id === message.id);
         if (exists) return prev;
-        const filtered = prev.filter(
-          (msg) =>
-            !(
-              msg.pending &&
-              msg.text === message.text &&
-              msg.senderId === message.senderId
-            ),
+        const filtered = prev.filter((msg) =>
+          !(msg.pending && msg.text === message.text && msg.senderId === message.senderId),
         );
         return [...filtered, message];
       });
@@ -68,6 +108,47 @@ export function Chat({ userId }: { userId: string | undefined}) {
       socket.off("new_message");
     };
   }, [socket]);
+
+  useEffect(() => {
+    socket.on("message_delivered",({ tempId, realId }) => {
+      setLocalMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.tempId === tempId) {
+            return {
+              ...msg,
+              id: realId,
+              pending: false,
+              deliveredAt: new Date(),
+            };
+          }
+          return msg;
+        }),
+      );
+    });
+    return () => {
+      socket.off("message_delivered");
+    };
+  }, [socket]);
+
+
+
+
+
+
+
+  if (isLoading) {
+    return <div className="flex-1 bg-gray-900 text-white p-4"></div>;
+  }
+
+  const UserCurrent = chat?.members.find((member) => userId === member.user.id)
+
+  const isGroup = chat?.chatType === "GROUP"
+  const interlocutorId = chat?.chatType === ChatType.DIRECT ? chat.members.find(m => m.user.id !== userId)?.user.id : undefined;
+
+  const isOnline = interlocutorId && onlineUsers.has(interlocutorId);
+
+  const RightToPublic = (chat?.chatType !== ChatType.CHANNEL || UserCurrent?.role === ChatRole.OWNER 
+    || UserCurrent?.role === ChatRole.ADMIN)
 
   const handleSendMessage = () => {
     if (!messageText.trim()) return;
@@ -100,43 +181,13 @@ export function Chat({ userId }: { userId: string | undefined}) {
     setMessageText("");
   };
 
-  useEffect(() => {
-    socket.on("message_delivered",({ tempId, realId }) => {
-      setLocalMessages((prev) =>
-        prev.map((msg) => {
-          if (msg.tempId === tempId) {
-            return {
-              ...msg,
-              id: realId,
-              pending: false,
-            };
-          }
-          return msg;
-        }),
-      );
-    });
-    return () => {
-      socket.off("message_delivered");
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [localMessages]);
-
-  if (isLoading) {
-    return <div className="flex-1 bg-gray-900 text-white p-4"></div>;
-  }
-
-  const UserCurrent = chat?.members.find((member) => userId === member.user.id)
-
-  const isGroup = chat?.chatType === "GROUP"
-  const interlocutorId = chat?.chatType === ChatType.DIRECT ? chat.members.find(m => m.user.id !== userId)?.user.id : undefined;
-
-  const isOnline = interlocutorId && onlineUsers.has(interlocutorId);
-
-  const RightToPublic = (chat?.chatType !== ChatType.CHANNEL || UserCurrent?.role === ChatRole.OWNER 
-    || UserCurrent?.role === ChatRole.ADMIN)
+  const renderMessageStatus = (msg: any,) => {
+    const status = getMessageStatus(msg,otherUserLastReadAt,);
+    if (status === "sent") return <span className="text-gray-400"><Check size={15} /></span>
+    if (status === "delivered") return <span className="text-purple-300"><Check size={15} /></span>
+    if (status === "read") return <span className="text-purple-300"><CheckCheck size={15} /></span>
+    return null;
+  };
 
   return (
     <div className="flex flex-col flex-1 bg-gray-900">
@@ -269,7 +320,7 @@ export function Chat({ userId }: { userId: string | undefined}) {
                       <div className="break-words">
                         {msg.text}
 
-                        <span
+                        <div
                           className="
                             float-right
                             ml-2
@@ -280,8 +331,23 @@ export function Chat({ userId }: { userId: string | undefined}) {
                             whitespace-nowrap
                           "
                         >
-                          {formatTime(msg.createdAt)}
-                        </span>
+                          <div
+                            className="
+                              flex
+                              items-center
+                              justify-end
+                              gap-1
+                              mt-1
+                              text-[11px]
+                              text-gray-300
+                            "
+                          >
+                            <span>
+                              {formatTime(msg.createdAt)}
+                            </span>
+                            {(isMine && chat?.chatType === ChatType.DIRECT) && renderMessageStatus(msg)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

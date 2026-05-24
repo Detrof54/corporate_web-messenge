@@ -14,4 +14,6 @@ export interface SendMessageDto {
   tempId: string;
   chatId: string;
   text: string;
+  pending?: boolean
+  deliveredAt?: Date | null
 }
