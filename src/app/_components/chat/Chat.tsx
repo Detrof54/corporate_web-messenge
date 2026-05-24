@@ -8,21 +8,35 @@ import Link from "next/link";
 import { useState } from "react";
 import { SideMenuChat } from "./MenuChat.tsx/SideMenuChat";
 import { ChatRole, ChatType } from "@prisma/client";
-
+import { useRef } from "react";
 import { useEffect } from "react";
 import { useSocket } from "~/providers/socket-provider";
 
 export function Chat({ userId }: { userId: string | undefined}) {
   const { socket, onlineUsers } = useSocket();
-
   const [openMenu, setOpenMenu] = useState(false);
+  const [localMessages, setLocalMessages] = useState<any[]>([]);    //сообщения
+  const [messageText, setMessageText] = useState("");               //сообщение для отправки
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const params = useParams();
   const chatId = (params.chatId ?? params.id) as string;
-  
-  const { data: messages, isLoading } = api.chats.getMessages.useQuery({ chatId,});
-  const { data: chat } = api.chats.getChatInfo.useQuery({chatId,});
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
+  const { data: messages, isLoading } = api.chats.getMessages.useQuery({ chatId,});
+  useEffect(() => {
+    if (messages) {
+      setLocalMessages(messages);
+    }
+  }, [messages]);
+
+  const { data: chat } = api.chats.getChatInfo.useQuery({chatId,});
+  
   //подключение к комнате чата
   useEffect(() => {
     socket.emit("join_chat", chatId);
@@ -31,6 +45,63 @@ export function Chat({ userId }: { userId: string | undefined}) {
       socket.emit("leave_chat", chatId);
     };
   }, [chatId, socket]);
+
+  useEffect(() => {
+    socket.on("new_message", (message) => {
+      setLocalMessages((prev) => {
+        const exists = prev.some(
+          (msg) => msg.id === message.id,
+        );
+        if (exists) return prev;
+        const filtered = prev.filter(
+          (msg) =>
+            !(
+              msg.pending &&
+              msg.text === message.text &&
+              msg.senderId === message.senderId
+            ),
+        );
+        return [...filtered, message];
+      });
+    });
+    return () => {
+      socket.off("new_message");
+    };
+  }, [socket]);
+
+  const handleSendMessage = () => {
+    if (!messageText.trim()) return;
+    const optimisticMessage = {
+      id: crypto.randomUUID(),
+      text: messageText,
+      chatId,
+      senderId: userId,
+      createdAt: new Date(),
+      pending: true,
+      sender: {
+        firstname: "You",
+        surname: "",
+        image: null,
+      },
+    };
+    // МГНОВЕННОЕ ОБНОВЛЕНИЕ ПОЛЬЗОВАТЕЛЬСКОГО ИНТЕРФЕЙСА
+    setLocalMessages((prev) => [
+      ...prev,
+      optimisticMessage,
+    ]);
+    // ОТПРАВИТЬ НА СЕРВЕР
+    socket.emit("send_message", {
+      chatId,
+      text: messageText,
+    });
+    setMessageText("");
+  };
+
+
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [localMessages]);
 
   if (isLoading) {
     return <div className="flex-1 bg-gray-900 text-white p-4"></div>;
@@ -99,18 +170,18 @@ export function Chat({ userId }: { userId: string | undefined}) {
 
           {/* СООБЩЕНИЯ */}
           <div className="flex-1 overflow-auto p-4 flex flex-col gap-2">
-            {messages?.map((msg, index) => {
+            {localMessages?.map((msg, index) => {
               const isMine = msg.senderId === userId;
 
-              const prev = messages[index - 1];
-              const next = messages[index + 1];
+              const prev = localMessages[index - 1];
+              const next = localMessages[index + 1];
 
               const isFirstInGroup = prev?.senderId !== msg.senderId;
               const isLastInGroup = next?.senderId !== msg.senderId;
 
               const currentDate = new Date(msg.createdAt);
 
-              const prevMessage = messages[index - 1];
+              const prevMessage = localMessages[index - 1];
 
               const prevDate = prevMessage
                 ? new Date(prevMessage.createdAt)
@@ -164,6 +235,8 @@ export function Chat({ userId }: { userId: string | undefined}) {
                         ${isMine
                           ? "bg-purple-500 text-white"
                           : "bg-gray-700 text-white"}
+                          
+                        ${msg.pending ? "opacity-70" : ""}
                       `}
                     >
                       {!isMine && isGroup && isFirstInGroup && (
@@ -195,16 +268,29 @@ export function Chat({ userId }: { userId: string | undefined}) {
               </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Строка ввода */}
           {RightToPublic &&
             <div className="h-14 border-t border-gray-800 flex items-center gap-2 px-3">
               <input
+                value={messageText}
+                onChange={(e) =>
+                  setMessageText(e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                  }
+                }}
                 placeholder="Сообщение"
                 className="flex-1 bg-gray-800 text-white px-3 py-2 rounded-lg outline-none"
               />
-              <button className="bg-purple-500 w-10 h-10 rounded-full">
+              <button
+                onClick={handleSendMessage}
+                className="bg-purple-500 w-10 h-10 rounded-full"
+              >
                 ↑
               </button>
             </div>

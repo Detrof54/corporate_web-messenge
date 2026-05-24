@@ -6,6 +6,7 @@ import { registerChatHandlers } from "./handlers/chat";
 import { addOnlineUser, removeOnlineUser } from "./handlers/status";
 import { db } from "../db";
 import type { SocketData } from "./type";
+import { registerMessageHandlers } from "./handlers/messege";
 
 let io: Server | null = null    
 
@@ -29,7 +30,8 @@ export const initSocket = (server: HTTPServer) => {
 
     console.log("🟢Connected user:", user.email);
     
-    registerChatHandlers(socket); 
+    registerChatHandlers(socket);         //Добавление в комнату чата
+    registerMessageHandlers(socket);      //отправка сообщения
 
     socket.join(`user:${user.id}`);
     addOnlineUser(user.id, socket.id)
