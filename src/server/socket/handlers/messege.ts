@@ -22,6 +22,10 @@ export const registerMessageHandlers = (socket: Socket,) => {
             sender: true,
           },
         });
+        socket.emit("message_delivered", {
+          tempId: data.tempId,
+          realId: message.id,
+        });
 
         console.log(`✉️ ${user.email}: ${data.text}`,);
 

@@ -11,6 +11,7 @@ export interface SocketData {
 }
 
 export interface SendMessageDto {
+  tempId: string;
   chatId: string;
   text: string;
 }

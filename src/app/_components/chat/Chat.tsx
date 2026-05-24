@@ -71,8 +71,10 @@ export function Chat({ userId }: { userId: string | undefined}) {
 
   const handleSendMessage = () => {
     if (!messageText.trim()) return;
+    const tempId = crypto.randomUUID();
     const optimisticMessage = {
-      id: crypto.randomUUID(),
+      id: tempId, 
+      tempId,
       text: messageText,
       chatId,
       senderId: userId,
@@ -91,13 +93,32 @@ export function Chat({ userId }: { userId: string | undefined}) {
     ]);
     // ОТПРАВИТЬ НА СЕРВЕР
     socket.emit("send_message", {
+      tempId,
       chatId,
       text: messageText,
     });
     setMessageText("");
   };
 
-
+  useEffect(() => {
+    socket.on("message_delivered",({ tempId, realId }) => {
+      setLocalMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.tempId === tempId) {
+            return {
+              ...msg,
+              id: realId,
+              pending: false,
+            };
+          }
+          return msg;
+        }),
+      );
+    });
+    return () => {
+      socket.off("message_delivered");
+    };
+  }, [socket]);
 
   useEffect(() => {
     scrollToBottom();
