@@ -2,10 +2,15 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { ChatRole } from "@prisma/client";
+import { isAdmin } from "~/app/api/auth/check";
 
 export const administrationPageRouter = createTRPCRouter({
 
+    //Получение всех пользователей системы
     getUsers: protectedProcedure.query(async ({ ctx }) => {
+        if (!isAdmin())
+            throw new TRPCError({code: "FORBIDDEN", message: "Нет прав администратора",});
+
         return await ctx.db.user.findMany({
             where: {},
             select: {
@@ -20,17 +25,18 @@ export const administrationPageRouter = createTRPCRouter({
         });
     }),
 
+    //Создание нового пользователя в системе
     createUser: protectedProcedure
-    .input(
-        z.object({
-            firstname: z.string().min(1),
-            surname: z.string().min(1),
-            patronymic: z.string().optional(),
-            email: z.string().email(),
-            role: z.enum(["ADMIN", "USER"]),
-        })
-    )
+    .input(z.object({
+        firstname: z.string().min(1),
+        surname: z.string().min(1),
+        patronymic: z.string().optional(),
+        email: z.string().email(),
+        role: z.enum(["ADMIN", "USER"]),
+    }))
     .mutation(async ({ ctx, input }) => {
+        if (!isAdmin())
+            throw new TRPCError({code: "FORBIDDEN", message: "Нет прав администратора",});
 
         const exists = await ctx.db.user.findUnique({
             where: {
@@ -38,13 +44,9 @@ export const administrationPageRouter = createTRPCRouter({
             },
         });
 
-        if (exists) {
-            throw new TRPCError({
-                code: "CONFLICT",
-                message: "Пользователь уже существует",
-            });
-        }
-
+        if (exists) 
+            throw new TRPCError({code: "CONFLICT", message: "Пользователь уже существует",});
+        
         const user = await ctx.db.user.create({
             data: {
                 firstname: input.firstname,
@@ -58,14 +60,14 @@ export const administrationPageRouter = createTRPCRouter({
         return user;
     }),
 
-
+    //Удалить пользователя 
     deleteUser: protectedProcedure
-    .input(
-        z.object({
-            userId: z.string(),
-        })
-    )
+    .input(z.object({
+        userId: z.string(),
+    }))
     .mutation(async ({ ctx, input }) => {
+        if (!isAdmin())
+            throw new TRPCError({code: "FORBIDDEN", message: "Нет прав администратора",});
 
         const user = await ctx.db.user.findUnique({
             where: {
@@ -73,12 +75,8 @@ export const administrationPageRouter = createTRPCRouter({
             },
         });
 
-        if (!user) {
-            throw new TRPCError({
-                code: "NOT_FOUND",
-                message: "Пользователь не найден",
-            });
-        }
+        if (!user) 
+            throw new TRPCError({code: "NOT_FOUND", message: "Пользователь не найден",});
 
         await ctx.db.chatMember.deleteMany({
             where: {
@@ -92,23 +90,22 @@ export const administrationPageRouter = createTRPCRouter({
             },
         });
 
-        return {
-            success: true,
-        };
+        return { success: true, };
     }),
 
+    // Обновление данных пользователя
     updateUser: protectedProcedure
-    .input(
-        z.object({
-            userId: z.string(),
-            firstname: z.string().min(1),
-            surname: z.string().min(1),
-            patronymic: z.string().optional(),
-            email: z.string().email(),
-            role: z.enum(["ADMIN", "USER"]),
-        })
-    )
+    .input(z.object({
+        userId: z.string(),
+        firstname: z.string().min(1),
+        surname: z.string().min(1),
+        patronymic: z.string().optional(),
+        email: z.string().email(),
+        role: z.enum(["ADMIN", "USER"]),
+    }))
     .mutation(async ({ ctx, input }) => {
+        if (!isAdmin())
+            throw new TRPCError({code: "FORBIDDEN", message: "Нет прав администратора",});
 
         const user = await ctx.db.user.findUnique({
             where: {
@@ -116,13 +113,9 @@ export const administrationPageRouter = createTRPCRouter({
             },
         });
 
-        if (!user) {
-            throw new TRPCError({
-                code: "NOT_FOUND",
-                message: "Пользователь не найден",
-            });
-        }
-
+        if (!user) 
+            throw new TRPCError({ code: "NOT_FOUND", message: "Пользователь не найден",});
+        
         const exists = await ctx.db.user.findFirst({
             where: {
                 email: input.email,
@@ -132,12 +125,8 @@ export const administrationPageRouter = createTRPCRouter({
             },
         });
 
-        if (exists) {
-            throw new TRPCError({
-                code: "CONFLICT",
-                message: "Email уже используется",
-            });
-        }
+        if (exists) 
+            throw new TRPCError({ code: "CONFLICT", message: "Email уже используется",});
 
         return await ctx.db.user.update({
             where: {
@@ -152,4 +141,7 @@ export const administrationPageRouter = createTRPCRouter({
             },
         });
     }),
+    
 })
+
+

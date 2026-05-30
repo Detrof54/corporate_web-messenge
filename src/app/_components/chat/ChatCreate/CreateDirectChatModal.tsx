@@ -9,34 +9,27 @@ interface Props {
   onClose: () => void;
 }
 
-export function CreateDirectChatModal({
-  open,
-  onClose,
-}: Props) {
-  const utils = api.useUtils();
-
+export function CreateDirectChatModal({ open, onClose}: Props){
   const [search, setSearch] = useState("");
-  const [selectedUserId, setSelectedUserId] =
-    useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Пользователи для создания direct
-  const { data: users, isLoading } =
-    api.chats.getUsersForDirect.useQuery(undefined, {
-      enabled: open,
-    });
+  const { data: users, isLoading } = api.chats.getUsersForDirect.useQuery(undefined, {
+    enabled: open,
+  });
 
+  const utils = api.useUtils();
   // Создание direct
-  const createDirect =
-    api.chats.createDirect.useMutation({
-      onSuccess: () => {
-        utils.chats.getChats.invalidate();
+  const createDirect = api.chats.createDirect.useMutation({
+    onSuccess: () => {
+      utils.chats.getChats.invalidate();
 
-        setSelectedUserId(null);
-        setSearch("");
+      setSelectedUserId(null);
+      setSearch("");
 
-        onClose();
-      },
-    });
+      onClose();
+    },
+  });
 
   // Поиск только по имени и фамилии
   const filteredUsers = useMemo(() => {

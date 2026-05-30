@@ -1,12 +1,12 @@
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
-import { getId } from "~/app/api/auth/check";
+import { getId, isAdmin } from "~/app/api/auth/check";
 import { ChatType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 
 export const chatsRouter = createTRPCRouter({
 
-    //Получение списка чатов
+    //Получение списка чатов (всех) или только выбранной группы
     getChats: protectedProcedure
     .input(z.object({
         folderId: z.string().optional(),
@@ -45,6 +45,18 @@ export const chatsRouter = createTRPCRouter({
             });
         }
 
+        const folder = await ctx.db.folder.findUnique({
+            where:{
+                id: input.folderId
+            },
+            select: {
+                userId: true
+            }
+        })
+
+        if(folder?.userId !== ctx.session.user.id)
+            throw new TRPCError({code: "FORBIDDEN", message: "Доступ к чужой папке запрещен",});
+
         //список чатов выбранной папки
         return ctx.db.chat.findMany({
             where: {
@@ -76,25 +88,55 @@ export const chatsRouter = createTRPCRouter({
         });
     }),
 
-    //только сообщения чата
+    //Получение истории переписки чата (всех сообщений)
     getMessages: protectedProcedure
     .input(z.object({
         chatId: z.string(),
     }))
-    .query(({ ctx, input }) => {
+    .query(async ({ ctx, input }) => {
+        const chat = await ctx.db.chat.findUnique({
+            where: { id: input.chatId },
+            select: {
+                members: {
+                    select: {
+                        userId: true,
+                    }
+                }
+            }
+        })
+
+        const member = chat?.members.find((m) => m.userId === ctx.session.user.id)
+        if (!member)
+            throw new TRPCError({code: "FORBIDDEN", message: "Запрос не от участника чата, доступ запрещен",});
+
         return ctx.db.message.findMany({
-        where: { chatId: input.chatId },
-        orderBy: { createdAt: "asc" },
-        include: {
-            sender: true,
-        },
+            where: { chatId: input.chatId },
+            orderBy: { createdAt: "asc" },
+            include: {
+                sender: true,
+            },
         });
     }),
 
-    // чат с его информацией (сообщения,)
+    // чат с его информацией (сообщения, пользователи и так далее)
     getChatInfo: publicProcedure
     .input(z.object({ chatId: z.string() }))
     .query(async ({ ctx, input }) => {
+        const chat = await ctx.db.chat.findUnique({
+            where: { id: input.chatId },
+            select: {
+                members: {
+                    select: {
+                        userId: true,
+                    }
+                }
+            }
+        })
+
+        const member = chat?.members.find((m) => m.userId === ctx.session?.user.id)
+        if (!member)
+            throw new TRPCError({code: "FORBIDDEN", message: "Запрос не от участника чата, доступ запрещен",});
+
         return ctx.db.chat.findUnique({
         where: { id: input.chatId },
         select: {
@@ -115,7 +157,7 @@ export const chatsRouter = createTRPCRouter({
                             patronymic: true,
                         }
                     },
-                    lastReadAt:true,
+                    lastReadAt: true,
                 }
             },
         },
@@ -123,9 +165,7 @@ export const chatsRouter = createTRPCRouter({
     }),
 
 
-
-
-    // Создание канала информации
+    // Создание группы/канала
     createChannelAndGroup: protectedProcedure
     .input(
         z.object({
@@ -136,6 +176,9 @@ export const chatsRouter = createTRPCRouter({
         })
     )
     .mutation(async ({ ctx, input }) => {
+        if (!isAdmin())
+            throw new TRPCError({code: "FORBIDDEN", message: "Нет прав администратора",});
+
         const creatorId = ctx.session.user.id;
 
         // creator всегда участник
@@ -174,89 +217,80 @@ export const chatsRouter = createTRPCRouter({
   
 
     createDirect: protectedProcedure
-    .input(
-    z.object({
+    .input(z.object({
         targetUserId: z.string(),
-    })
-    )
+    }))
     .mutation(async ({ ctx, input }) => {
+        const currentUserId = ctx.session.user.id;
 
-    const currentUserId = ctx.session.user.id;
+        // Нельзя создать чат с самим собой
+        if (currentUserId === input.targetUserId) 
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Нельзя создать чат с самим собой",});
 
-    // Нельзя создать чат с самим собой
-    if (currentUserId === input.targetUserId) {
-        throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Нельзя создать чат с самим собой",
+        // Ищем существующий direct чат
+        const existingChat = await ctx.db.chat.findFirst({
+            where: {
+                chatType: ChatType.DIRECT,
+                AND: [
+                    {
+                        members: {
+                            some: {
+                                userId: currentUserId,
+                            },
+                        },
+                    },
+                    {
+                        members: {
+                            some: {
+                                userId: input.targetUserId,
+                            },
+                        },
+                    },
+                ],
+            },
+
+            include: {
+            members: {
+                include: {
+                user: true,
+                },
+            },
+            },
         });
-    }
 
-    // Ищем существующий direct чат
-    const existingChat = await ctx.db.chat.findFirst({
-        where: {
-        chatType: ChatType.DIRECT,
+        // Если уже есть — возвращаем его
+        if (existingChat) {
+            return existingChat;
+        }
 
-        AND: [
-            {
-            members: {
-                some: {
-                userId: currentUserId,
+        // Создаем новый direct чат
+        return await ctx.db.chat.create({
+            data: {
+                chatType: ChatType.DIRECT,
+                members: {
+                    create: [
+                        {
+                            userId: currentUserId,
+                        },
+                        {
+                            userId: input.targetUserId,
+                        },
+                    ],
                 },
             },
-            },
-            {
-            members: {
-                some: {
-                userId: input.targetUserId,
+            include: {
+                members: {
+                    include: {
+                        user: true,
+                    },
                 },
             },
-            },
-        ],
-        },
-
-        include: {
-        members: {
-            include: {
-            user: true,
-            },
-        },
-        },
-    });
-
-    // Если уже есть — возвращаем его
-    if (existingChat) {
-        return existingChat;
-    }
-
-    // Создаем новый direct чат
-    return await ctx.db.chat.create({
-        data: {
-        chatType: ChatType.DIRECT,
-
-        members: {
-            create: [
-            {
-                userId: currentUserId,
-            },
-            {
-                userId: input.targetUserId,
-            },
-            ],
-        },
-        },
-
-        include: {
-        members: {
-            include: {
-            user: true,
-            },
-        },
-        },
-    });
+        });
     }),
     
 
-    getUsers: protectedProcedure.query(async ({ ctx }) => {
+    getUsers: protectedProcedure
+    .query(async ({ ctx }) => {
 
     const currentUserId = ctx.session.user.id;
 

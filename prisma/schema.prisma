@@ -51,6 +51,7 @@ model User {
     email               String?         @unique
     emailVerified       DateTime?
 
+    isActive            Boolean         @default(true)
     createdAt           DateTime        @default(now())
     role                RoleSystem      @default(USER)
 
@@ -64,7 +65,7 @@ model User {
     folder              Folder[]
 }
 enum RoleSystem {
-  ADMIN        
+  ADMIN    
   USER       
 }
 

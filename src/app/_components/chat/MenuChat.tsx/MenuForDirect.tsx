@@ -8,20 +8,16 @@ interface Props {
   onClose: () => void;
 }
 
-export function MenuForDirect({
-  chatId,
-  onClose,
-}: Props) {
+export function MenuForDirect({chatId,onClose}: Props) {
 
   const utils = api.useUtils();
 
-  const deleteDirect =
-    api.chats.deleteDirect.useMutation({
-      onSuccess: () => {
-        utils.chats.getChats.invalidate();
-        onClose();
-      },
-    });
+  const deleteDirect = api.chats.deleteDirect.useMutation({
+    onSuccess: () => {
+      utils.chats.getChats.invalidate();
+      onClose();
+    },
+  });
 
   return (
     <div className="flex flex-col gap-2">

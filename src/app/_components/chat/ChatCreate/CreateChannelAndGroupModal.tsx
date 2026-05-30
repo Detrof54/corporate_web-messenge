@@ -13,20 +13,14 @@ interface Props {
   TypeChat: "GROUP" | "CHANNEL"
 }
 
-export function CreateChannelAndGroupModal({
-  open,
-  onClose,
-  TypeChat,
-}: Props) {
-  const utils = api.useUtils();
-
+export function CreateChannelAndGroupModal({open, onClose, TypeChat,}: Props){
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   const { data: users } = api.chats.getUsers.useQuery();
 
+  const utils = api.useUtils();
   const createChannel = api.chats.createChannelAndGroup.useMutation({
     onSuccess: () => {
       utils.chats.getChats.invalidate();
@@ -37,7 +31,7 @@ export function CreateChannelAndGroupModal({
     },
   });
 
-    if (!open) return null;
+  if (!open) return null;
 
   return (
     <div
@@ -45,17 +39,10 @@ export function CreateChannelAndGroupModal({
       onClick={onClose}
     >
       <div
-        className="
-        w-full max-w-xl
-        max-h-[90vh]
-        bg-gray-900
-        rounded-3xl
-        p-6
-        overflow-y-auto
-      "
+        className="w-full max-w-xl max-h-[90vh] bg-gray-900 rounded-3xl p-6 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* HEADER */}
+        {/* ЗАГОЛОВОК */}
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={onClose}
@@ -67,7 +54,7 @@ export function CreateChannelAndGroupModal({
           <h2 className="text-xl font-bold text-white">
             Создание {TypeChat === ChatType.CHANNEL ? "канала" : "группы"}
           </h2>
-
+          
           <div className="w-10" />
         </div>
 
@@ -142,7 +129,7 @@ export function CreateChannelAndGroupModal({
             <div className="max-h-64 overflow-auto flex flex-col gap-2">
               {users?.map((user) => {
                 const selected = selectedMembers.includes(user.id);
-
+                
                 return (
                   <button
                     key={user.id}
@@ -203,9 +190,7 @@ export function CreateChannelAndGroupModal({
             >
               Создать {TypeChat === ChatType.CHANNEL ? "канала" : "группы"}
             </button>
-
           </div>
-
         </div>
       </div>
     </div>

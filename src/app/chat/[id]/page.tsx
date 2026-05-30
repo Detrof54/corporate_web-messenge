@@ -4,6 +4,9 @@ import { ChatsList } from "~/app/_components/chat/ChatsList";
 import { Chat } from "~/app/_components/chat/Chat";
 import { auth } from "~/server/auth";
 
+//СТРАНИЦА ЧАТА
+//(Отображает список чатов + выбранный чат)
+
 interface PageProps {
   params: {
     id: string;
