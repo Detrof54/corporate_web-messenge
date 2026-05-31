@@ -2,6 +2,7 @@ import { auth } from "~/server/auth";
 import { HydrateClient } from "~/trpc/server";
 import { SigninLink } from "./signlink";
 import { Sidebar } from "./sidebar";
+import LoginPage from "../login/page";
 
 export async function MyApp({
   children,
@@ -26,7 +27,8 @@ export async function MyApp({
         </div>
       ) : (
         <div className="h-screen flex items-center justify-center bg-gray-900 text-white">
-          <SigninLink />
+          <LoginPage />
+          {/* <SigninLink /> */}
         </div>
       )}
     </HydrateClient>
